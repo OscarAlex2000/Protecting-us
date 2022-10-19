@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import * as mapboxgl from 'mapbox-gl'
+
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -6,6 +9,11 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'authApp';
+
+  ngOnInit(): void {
+    (mapboxgl as any).accessToken = environment.mapboxToken;
+  }
+
 }

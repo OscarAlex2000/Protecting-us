@@ -115,3 +115,23 @@ export interface AuthResponse {
     },
     token: string
 }
+
+// Get users
+export interface UsersResponse {
+    ok: boolean,
+    count: number,
+    msg: string,
+    msg_es: string,
+    users: any[]
+}
+
+// Users
+export interface Users {
+    total: number,
+    users: any[]
+}
+// export interface Users {
+//     _id: number; 
+//     name: string; 
+//     user_name: string;
+// }

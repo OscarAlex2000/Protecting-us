@@ -30,7 +30,7 @@ export class LoginComponent {
       .subscribe( resp => {
         if ( resp.ok === true ) {
           this.router.navigateByUrl('/dashboard');
-          Swal.fire('Good job!',resp.msg_es,'success');
+          Swal.fire('Buen trabajo!',resp.msg_es,'success');
         } else {
           Swal.fire('ERROR', resp.msg_es, 'error');
         }

@@ -6,7 +6,8 @@ export const environment = {
   production: false,
   api_key: 'wfwyBEY4npt10C7NC0C3pMTAY9PguNYe046GHHxVutLpTIb0gyLmz44Dm0naPbC',
   baseUrl_users: 'http://localhost:8080',
-  baseUrl_companies: 'http://localhost:8081'
+  baseUrl_companies: 'http://localhost:8081',
+  mapboxToken: 'pk.eyJ1Ijoib3NjYXJhbGV4IiwiYSI6ImNsN3FraDUxZTA2ZDYzb2p6aWtmMm1vNGIifQ.tNkYkcy7eYjqXyNaV-4OiQ'
 };
 
 /*
