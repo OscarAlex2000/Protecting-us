@@ -29,10 +29,10 @@ export class RegisterComponent {
     this.authService.register( name, email, password )
       .subscribe( (resp)  => {
         if ( resp.ok === true ) {
-          Swal.fire('Inicio exitoso!',resp.msg_es,'success')
+          Swal.fire('Datos guardados correctamente!',resp.msg_es,'success')
           this.router.navigateByUrl('/login');
         } else {
-          Swal.fire('ERROR', resp.msg_es, 'error');
+          Swal.fire('Error al guardar los datos', resp.msg_es, 'error');
         }
       });
   }

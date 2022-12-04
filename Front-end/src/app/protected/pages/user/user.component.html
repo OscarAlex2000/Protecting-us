@@ -1,0 +1,86 @@
+<app-menu></app-menu>
+<form class="login100-form" 
+    autocomplete="off"
+    [formGroup]="miFormulario"
+    (ngSubmit)="updateUser()">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <span class="login100-form-title p-b-45">Usuario</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group wrap-input100 m-b-23 mb-3">
+                    <span class="input-group-text" id="basic-addon1" style="background-color: #ff971f">Nombre</span>
+                    <input class="form-control"
+                        type="text" 
+                        formControlName="name"
+                        name="user.name"
+                        placeholder="Nombre"
+                        ngDefaultControl
+                        [(ngModel)]="usuario.name"
+                        aria-describedby="basic-addon1">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group wrap-input100 m-b-23 mb-3">
+                    <span class="input-group-text" id="basic-addon1" style="background-color: #ff971f">A. Paterno</span>
+                    <input class="form-control"
+                        type="text" 
+                        formControlName="first_lastname"
+                        placeholder="Primer apellido"
+                        ngDefaultControl
+                        [(ngModel)]="usuario.first_lastname"
+                        aria-describedby="basic-addon1">
+                </div>
+            </div>
+            <div class="col">
+                <div class="input-group wrap-input100 m-b-23 mb-3">
+                    <span class="input-group-text" id="basic-addon1" style="background-color: #ff971f">A. Materno</span>
+                    <input class="form-control"
+                        type="text" 
+                        formControlName="second_lastname"
+                        placeholder="Segundo apellido"
+                        ngDefaultControl
+                        [(ngModel)]="usuario.second_lastname"
+                        aria-describedby="basic-addon1">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="input-group wrap-input100 m-b-23 mb-3">
+                    <span class="input-group-text" id="basic-addon1" style="background-color: #ff971f">Correo</span>
+                    <input class="form-control"
+                        type="text" 
+                        formControlName="email"
+                        placeholder="Correo Electrónico"
+                        ngDefaultControl
+                        [(ngModel)]="usuario.email"
+                        aria-describedby="basic-addon1"
+                        [readonly]="emailEdit" >
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col">
+                <button type="button" 
+                        class="btn btn-secondary" 
+                        *ngIf="returnButton"
+                        (click)="returnUsers()">Regresar</button>
+            </div>
+            <div class="col" align="right">
+                <button class="btn btn-primary btn-bottom-right" 
+                        type="button"
+                        type="submit" >Guardar</button>
+                    <!-- [disabled]="miFormulario.invalid" -->
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- {{ usuario | json }}
+{{ user_now | json }} -->

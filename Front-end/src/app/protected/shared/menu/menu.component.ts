@@ -23,13 +23,17 @@ export class MenuComponent {
     constructor( private router: Router,
             private authService: AuthService ) {}
 
+    navigate( rute: string ) {
+        this.router.navigateByUrl(`${ rute }`);
+    }
+
+    navigateUser( id: string ) {
+        this.router.navigateByUrl(`/dashboard/own/${ id }`);
+    }
+
     logout() {
         this.router.navigateByUrl('/auth');
         this.authService.logout();
-    }
-
-    init() {
-        console.log('click')
     }
 
 }

@@ -21,7 +21,7 @@ export class LoginComponent {
 
   constructor( private fb: FormBuilder,
               private router: Router, 
-              private authService: AuthService) { }
+              private authService: AuthService) {}
 
   login() {  
     const { email, password } = this.miFormulario.value;
@@ -30,8 +30,15 @@ export class LoginComponent {
       .subscribe( resp => {
         if ( resp.ok === true ) {
           this.router.navigateByUrl('/dashboard');
-          Swal.fire('Buen trabajo!',resp.msg_es,'success');
+          Swal.fire({
+            position: 'center',
+            icon: 'success',
+            title: 'Inicio de sesión exitoso!',
+            showConfirmButton: false,
+            timer: 1500
+          });
         } else {
+          this.miFormulario.reset()
           Swal.fire('ERROR', resp.msg_es, 'error');
         }
       });

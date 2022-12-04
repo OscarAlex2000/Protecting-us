@@ -70,6 +70,9 @@ export interface User {
     _id: string;
     name: string;
     email: string;
+    first_lastname: string;
+    second_lastname: string;
+
 }
 
 // Auth user
@@ -130,8 +133,17 @@ export interface Users {
     total: number,
     users: any[]
 }
-// export interface Users {
-//     _id: number; 
-//     name: string; 
-//     user_name: string;
-// }
+
+// Get user by id
+export interface UserResponse {
+    ok: boolean,
+    msg: string,
+    msg_es: string,
+    user: {
+        _id: string,
+        name: string,
+        user_name: string,
+        first_surname: string,
+        second_surname: string
+    }
+}

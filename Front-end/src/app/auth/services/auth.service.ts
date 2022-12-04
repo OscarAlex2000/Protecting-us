@@ -70,10 +70,13 @@ export class AuthService {
         .pipe(
           map( resp => {
             // localStorage.setItem('token', resp.token! );
+            // console.log(resp)
             this._usuario = {
               _id: resp.user._id,
               name: resp.user.name,
-              email: resp.user.user_name
+              email: resp.user.user_name,
+              first_lastname: resp.user.first_surname,
+              second_lastname: resp.user.second_surname
             }
 
             return resp.ok;
