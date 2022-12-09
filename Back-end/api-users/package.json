@@ -1,0 +1,39 @@
+{
+  "name": "users",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "bcryptjs": "^2.4.3",
+    "captcha-canvas": "^3.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
+    "express-validator": "^6.9.2",
+    "image-size": "^1.0.0",
+    "ioredis": "^4.27.6",
+    "jimp": "^0.16.1",
+    "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "libvips": "^0.0.2",
+    "mongoose": "^6.0.13",
+    "randomstring": "^1.2.2",
+    "redoc": "^2.0.0-rc.54",
+    "redoc-express": "^1.0.0",
+    "sharp": "^0.28.3",
+    "skia-canvas": "^0.9.27",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}

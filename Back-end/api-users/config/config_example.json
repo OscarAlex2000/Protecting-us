@@ -1,0 +1,108 @@
+{
+    "redis": {
+        "enabled": false,
+        "use_defaults": true,
+        "host": "localhost",
+        "port": 6379,
+        "user": "default",
+        "pass": "",
+        "events_to_emmit": [
+            {
+                "stream": "users.user.created",
+                "event_key": "userPost",
+                "max_len": 100
+            },
+            {
+                "stream": "users.user.updated",
+                "event_key": "userPatch",
+                "max_len": 100
+            },
+            {
+                "stream": "users.user.deleted",
+                "event_key": "userDelete",
+                "max_len": 100
+            },
+            {
+                "stream": "users.user.login",
+                "event_key": "userLogin",
+                "max_len": 100
+            }
+        ],
+        "events_to_listen": [
+            {
+                "function": "permission/updated",
+                "stream": "permissions.permission.updated",
+                "last_id_key": "app.users.permission.updated.last_id"
+            },
+            {
+                "function": "permission/deleted",
+                "stream": "permissions.permission.deleted",
+                "last_id_key": "app.users.permission.deleted.last_id"
+            },
+            {
+                "function": "profile/updated",
+                "stream": "profiles.profile.updated",
+                "last_id_key": "app.users.profile.updated.last_id"
+            },
+            {
+                "function": "profile/deleted",
+                "stream": "profiles.profile.deleted",
+                "last_id_key": "app.users.profile.deleted.last_id"
+            },
+            {
+                "function": "companySettings/updated",
+                "stream": "companies.settings.updated",
+                "last_id_key": "app.users.companies.settings.updated.last_id"
+            }
+        ]
+    },
+    "auth": {
+        "jwt_secret_key": "SECRET_KEY_JWT",
+        "jwt_exipire_time": "1h",
+        "login_data": "user_name",
+        "user_name_type": "code",
+        "user_name_min_length": 5,
+        "password_min_length": 8,
+        "multiple_sessions_setting_id": null,
+        "account_validation": true,
+        "validation_route": "https://radmintest.selfip.net/api/users/users/validate",
+        "validation_code_type": "short_code",
+        "create_default_user": false,
+        "default_user": {
+            "name": "Admin",
+            "user_name": "admin",
+            "password": "admin"
+        }
+    },
+    "mongo": {
+        "enabled": true,
+        "use_defaults": true,
+        "srv": false,
+        "host": "localhost",
+        "port": 27017,
+        "user": "",
+        "pass": "",
+        "db": "api_users"
+    },
+    "api": {
+        "port": 8010,
+        "company_id_required": false,
+        "show_user_name": false
+    },
+    "captcha": {
+        "enabled": false,
+        "minutes_to_expire": 5
+    },
+    "mail_info": {
+        "host": "http://localhost:5007",
+        "validation": {
+            "template": "archivistica_validation"
+        },
+        "password":{
+            "template": "archivistica_password"
+        },
+        "recobery_password":{
+            "template": "recobery_password"
+        }
+    }
+}

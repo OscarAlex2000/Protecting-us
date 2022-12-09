@@ -1,0 +1,1930 @@
+openapi: 3.0.0
+info:
+  title: Users
+  version: 1.3.6
+  description: |
+    # Introduction
+    * Get information from all registered users (Pager, search and sort)
+    * Get information from a specific user
+    * Register, add, update and delete users
+    * Add and delete user image
+    * Generate code for reset password
+    * Reset user password
+    * Validate authentication token
+    * Validate if `user_name` is available
+    * Generate a captcha
+    * Validate captcha
+
+    ## Configuration
+    In config/config.json file
+    ```
+      {
+        "mongo": { // Connection with MongoDB
+          "enabled": true,
+          "use_defaults": false,
+          "srv": false,
+          "host": "localhost",
+          "port": 27017,
+          "user": "",
+          "pass": "",
+          "db": "api_usuarios"
+        },
+        "redis": { // Connection with Redis
+          "enabled": true,
+          "use_defaults": false,
+          "host": "localhost",
+          "port": 6379,
+          "user": "",
+          "pass": "",
+          "events_to_emmit": [
+            {
+              "stream": "users.user.created",
+              "event_key": "userPost",
+              "max_len": 100
+            },
+            {
+              "stream": "users.user.updated",
+              "event_key": "userPatch",
+              "max_len": 100
+            },
+            {
+              "stream": "users.user.deleted",
+              "event_key": "userDelete",
+              "max_len": 100
+            },
+            {
+              "stream": "users.user.login",
+              "event_key": "userLogin",
+              "max_len": 100
+            }
+          ],
+          "events_to_listen": [
+            {
+                "function": "permission/updated",
+                "stream": "permissions.permission.updated",
+                "last_id_key": "app.users.permission.updated.last_id"
+            },
+            {
+                "function": "permission/deleted",
+                "stream": "permissions.permission.deleted",
+                "last_id_key": "app.users.permission.deleted.last_id"
+            },
+            {
+                "function": "profile/updated",
+                "stream": "profiles.profile.updated",
+                "last_id_key": "app.users.profile.updated.last_id"
+            },
+            {
+                "function": "profile/deleted",
+                "stream": "profiles.profile.deleted",
+                "last_id_key": "app.users.profile.deleted.last_id"
+            },
+            {
+                "function": "companySettings/updated",
+                "stream": "companies.settings.updated",
+                "last_id_key": "app.users.companies.settings.updated.last_id"
+            }
+          ]
+        },
+        "auth": {
+          "jwt_secret_key": "", // Password to create and validate the json web token
+          "jwt_exipire_time": "1h", // Time for the jwt to expire
+          "login_data": "user_name", //"user_name" or "user_name_and_password"
+          "user_name_type": "code", // Type of username, it can be "email", "phone_number" or "code", if it is "code" then user_name_min_length will be used.
+          "user_name_min_length": 5, // Minimum number of characters of user_name, when user_name_type="code"
+          "password_min_length": 5, // Minimum number of characters of password, when LOGIN_DATA="user_name_and_password"
+          "multiple_sessions_setting_id": null // Multi-session setting id, it must match the application's multi-session setting
+          "account_validation": true // If account validation is true then the account user must be validated before login and in the register process a validation email will be sent otherwise either of both wont be required
+          "validation_route": "route" // Route to where the system will request to validate the account
+          "validation_code_type": "short_code", // Type of validation code, it can be "short_code" or "long_code" Long = 20 hex characters, Short = 6 alphanumeric characters
+          "create_default_user": false, // If true then the api will create a default user when the application starts
+          "default_user": { // Default user data (only if create_default_user is true)
+              "name": "Admin",
+              "user_name": "admin",
+              "password": "admin"
+          }
+        },
+        "api": {
+          "port": 3000, // Port where server run
+          "company_id_required": false, // Whether or not company identification is required
+          "show_user_name": false // If you want to show the user_name then show_user_name=true, otherwise then show_user_name=false
+        },
+        "captcha":{
+          "enabled": true, //Enable captcha verification for register
+          "minutes_to_expire": 5
+        },
+        "mail_info": {
+            "host": "http://localhost:5007",
+            "validation": {
+                "template": "archivistica_validation"
+            },
+            "password":{
+                "template": "archivistica_password"
+            },
+            "recobery_password":{
+                "template": "recobery_password"
+            }
+        }
+      }
+      ```
+
+servers:
+  - url: http://localhost:port
+    description: For development mode
+  - url: http://container_name:port
+    description: If used as a container
+  - url: http://example-domain.extension
+    description: If used as a domain
+
+x-tagGroups:
+  - name: General
+    tags:
+      - Auth
+      - CRUD users
+      - Authorize actions
+      - Recovery password
+      - Validators
+  - name: Redis
+    tags:
+      - Events to emmit
+
+tags:
+  - name: Events to emmit
+    description: |
+      ### User created: `userPost`, User updated: `userPatch` or User logged in: `userLogin`
+      Content sended with this events
+      <SchemaDefinition schemaRef="#/components/schemas/UserRedisCreateUpdateLogin" />
+
+      ### User deleted: `userDelete`
+      Content sended with this event
+      <SchemaDefinition schemaRef="#/components/schemas/UserRedisDeleted" />
+
+paths:
+  /user-name-available:
+    # VALIDATE IF USER NAME IS AVAILABLE
+    get:
+      tags:
+        - Validators
+      summary: Validate if user_name is available
+      parameters:
+        - name: user_name
+          required: true
+          in: query
+          description: User name to validate if is available or not
+          schema:
+            type: string
+      responses:
+        200:
+          description: User name available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "OK"
+                  msg_es:
+                    type: string
+                    example: "OK"
+        400:
+          $ref: "#/components/responses/400"
+  /users/register:
+    # REGISTER A NEW USER
+    post:
+      tags:
+        - CRUD users
+      summary: Register
+      description: |
+        This path is used when the **first user is going to register**, or when the application **allows registration by users**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserToRegister"
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "User created successfully"
+                  msg_es:
+                    type: string
+                    example: "Usuario creado exitosamente"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+  /auth/login:
+    # LOGIN
+    post:
+      tags:
+        - Auth
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/auth.login_data=user_name_and_password"
+                - $ref: "#/components/schemas/auth.login_data=user_name"
+      responses:
+        200:
+          description: Token generated correctly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful login"
+                  msg_es:
+                    type: string
+                    example: "Inicio de sesion exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.IQn33EFuqYp5KBwnfckIZwi-2Tz8Ddy6HUDbQlpTAp0"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+  /auth/check-in:
+    # Check in
+    post:
+      tags:
+        - Auth
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+      summary: Check in
+      responses:
+        "200":
+          description: Successfull check-in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful check-in"
+                  msg_es:
+                    type: string
+                    example: "Check-in exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "404":
+          $ref: "#/components/responses/404"
+        "410":
+          $ref: "#/components/responses/410"
+  /auth/logout:
+    # LOGOUT
+    post:
+      tags:
+        - Auth
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+      summary: Logout
+      responses:
+        200:
+          description: Successfull logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful logout"
+                  msg_es:
+                    type: string
+                    example: "Cierre de sesion exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        403:
+          $ref: "#/components/responses/403Logout"
+  /auth/validate:
+    # VALIDATE JWT
+    get:
+      tags:
+        - Auth
+      summary: JWT validate
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: permissions
+          in: query
+          description: Array of permissions id to validate
+          schema:
+            type: array
+      responses:
+        200:
+          description: JWT is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful check-in"
+                  msg_es:
+                    type: string
+                    example: "Check-in exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        410:
+          $ref: "#/components/responses/410"
+  /users:
+    # SAVE A NEW USER
+    post:
+      tags:
+        - CRUD users
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+      summary: Add a user
+      description: |
+        This path is used when a user registration is required to be done by **another logged in user**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserToCreate"
+      responses:
+        "201":
+          description: User was created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful check-in"
+                  msg_es:
+                    type: string
+                    example: "Check-in exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "410":
+          $ref: "#/components/responses/410"
+    # GET ALL USERS
+    get:
+      tags:
+        - CRUD users
+      summary: Get a list of users
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: limit
+          $ref: "#/components/parameters/limitParam"
+        - name: from
+          $ref: "#/components/parameters/fromParam"
+        - name: search
+          $ref: "#/components/parameters/searchParam"
+        - name: search_fields
+          $ref: "#/components/parameters/searchFieldsParam"
+        - name: order_field
+          $ref: "#/components/parameters/orderFieldParam"
+        - name: order
+          $ref: "#/components/parameters/orderParam"
+        - name: active
+          $ref: "#/components/parameters/activeParam"
+        - name: root
+          $ref: "#/components/parameters/rootParam"
+        - name: exceptions
+          $ref: "#/components/parameters/exceptionsParam"
+      responses:
+        200:
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "${total} users found"
+                  msg_es:
+                    type: string
+                    example: "Se encontraron ${total} usuarios"
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        410:
+          $ref: "#/components/responses/410"
+  /users/{id}:
+    # GET USER BY ID
+    get:
+      tags:
+        - CRUD users
+      summary: Get a user by ID
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to get
+          schema:
+            type: string
+            format: Mongo ID
+      responses:
+        200:
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "User found"
+                  msg_es:
+                    type: string
+                    example: "Usuario encontrado"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        410:
+          $ref: "#/components/responses/410"
+    # UPDATE USER
+    patch:
+      tags:
+        - CRUD users
+      summary: Update a user
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to update
+          schema:
+            type: string
+            format: Mongo ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserToUpdate"
+      responses:
+        200:
+          description: User was updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful check-in"
+                  msg_es:
+                    type: string
+                    example: "Check-in exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        410:
+          $ref: "#/components/responses/410"
+    # DELETE USER
+    delete:
+      tags:
+        - CRUD users
+      summary: Delete a user
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to delete
+          schema:
+            type: string
+            format: Mongo ID
+      responses:
+        "204":
+          $ref: "#/components/responses/204User"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "410":
+          $ref: "#/components/responses/410"
+  /by-old/user/{id}:
+    # GET USER BY OLD ID
+    get:
+      tags:
+        - CRUD users
+      summary: Get a user by old id
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: Old id of the user to get
+          schema:
+            type: number
+      responses:
+        200:
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "User found"
+                  msg_es:
+                    type: string
+                    example: "Usuario encontrado"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+  /users/total-users:
+    get:
+      tags:
+        - CRUD users
+      summary: Get total active users
+      description: |
+        This path is used to get the total number of active users.
+      responses:
+        200:
+          description: Total active users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: number
+                    example: "10"
+        400:
+          $ref: "#/components/responses/400"
+  /users/validate/{code}:
+    # VALIDATE USER
+    patch:
+      tags:
+        - CRUD users
+      summary: Validate a user by code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: |
+            Code for validate user, `validation_code` in user model.
+          schema:
+            type: string
+      responses:
+        200:
+          description: User validated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "User validated"
+                  msg_es:
+                    type: string
+                    example: "Usuario validado"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+    # VALIDATE USER
+    get:
+      tags:
+        - CRUD users
+      summary: Validate a user by code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: |
+            Code for validate user, `validation_code` in user model.
+          schema:
+            type: string
+      responses:
+        200:
+          description: User validated
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Usuario validado"
+        400:
+          $ref: "#/components/responses/400"
+  /users/image/{id}:
+    # UPLOAD USER IMAGE
+    post:
+      tags:
+        - CRUD users
+      summary: Upload user image
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to set image
+          schema:
+            type: string
+            format: Mongo ID
+      requestBody:
+        required: true
+        content:
+          form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: png, jpg, jpeg or gif
+              required:
+                - image
+      responses:
+        200:
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successfull image upload"
+                  msg_es:
+                    type: string
+                    example: "La imagen se ha cargado exitosamente"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        410:
+          $ref: "#/components/responses/410"
+    # DELETE USER IMAGE
+    delete:
+      tags:
+        - CRUD users
+      summary: Delete user image
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to delete image
+          schema:
+            type: string
+            format: Mongo ID
+      responses:
+        "204":
+          $ref: "#/components/responses/204Image"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "410":
+          $ref: "#/components/responses/410"
+  /users/pass-recovery-code:
+    # GET RECOVERY CODE
+    post:
+      tags:
+        - Recovery password
+      summary: Get password recovery code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRecoveryPassword"
+      responses:
+        200:
+          description: Generated password recovery code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Generated password recovery code"
+                  msg_es:
+                    type: string
+                    example: "Codigo de recuperación de contraseña generado"
+                  user:
+                    $ref: "#/components/schemas/User"
+                  code:
+                    type: string
+                    example: "123456"
+        400:
+          $ref: "#/components/responses/400"
+  /auth/reset/validate/{code}:
+    # VALIDATE RECOVERY PASSWORD CODE
+    get:
+      tags:
+        - Recovery password
+      summary: Recovery password code validate
+      parameters:
+        - name: code
+          required: true
+          in: query
+          description: Recovery password code, created in `/users/pass-recovery-code`
+          schema:
+            type: string
+      responses:
+        200:
+          description: Valid and current code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "OK"
+                  msg_es:
+                    type: string
+                    example: "OK"
+        400:
+          $ref: "#/components/responses/400"
+  /auth/reset/{code}:
+    # RESET/UPDATE PASSWORD
+    patch:
+      tags:
+        - Recovery password
+      summary: Reset password
+      parameters:
+        - name: code
+          required: true
+          in: query
+          description: Reset password using code created in `/users/pass-recovery-code`
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPassword"
+      responses:
+        200:
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Password updated"
+                  msg_es:
+                    type: string
+                    example: "La contraseña ha sido actualizada"
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          $ref: "#/components/responses/400"
+  /auth:
+    # GENERATE A NEW JWT
+    get:
+      tags:
+        - Auth
+      parameters:
+        - name: x-token
+          required: true
+          in: header
+          description: JSON web token to auth
+          schema:
+            type: string
+      summary: Get a new token
+      responses:
+        200:
+          description: New token is generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Successful login"
+                  msg_es:
+                    type: string
+                    example: "Inicio de sesion exitoso"
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.IQn33EFuqYp5KBwnfckIZwi-2Tz8Ddy6HUDbQlpTAp0"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        410:
+          $ref: "#/components/responses/410"
+  /users/authorize-validator:
+    # Validar si el usuario puede autorizar una accion
+    post:
+      tags:
+        - Authorize actions
+      summary: Validate if the user can authorize an action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAuthorizeValidate"
+      responses:
+        200:
+          description: User authorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Authorized user"
+                  msg_es:
+                    type: string
+                    example: "Usuario autorizado"
+                  user:
+                    $ref: "#/components/schemas/UserAuthorized"
+        400:
+          $ref: "#/components/responses/400"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+  /auth/generate-captcha:
+    get:
+      tags:
+        - Auth
+      summary: Generate a captcha
+      parameters:
+        - name: base64
+          $ref: "#/components/parameters/base64"
+      responses:
+        200:
+          description: Captcha generated
+          $ref: "#/components/responses/200Captcha"
+        400:
+          $ref: "#/components/responses/400"
+  /auth/validate-captcha/:
+    post:
+      tags:
+        - Auth
+      summary: Validate captcha
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                captcha_text:
+                  type: string
+                  example: "527AD1"
+                  description: Captcha text to compare in the database
+                captcha_id:
+                  type: string
+                  example: "61d5d2bdc2ec68a9c58a0e87"
+                  description: Captcha ID to compare in the database
+              required:
+                - captcha_text
+                - captcha_id
+      responses:
+        200:
+          description: Captcha validated correctly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: ""
+                  msg_es:
+                    type: string
+                    example: ""
+                example: { msg: "Captcha valid", msg_es: "Captcha valido" }
+        400:
+          $ref: "#/components/responses/400"
+  /auth/resend-validation-email:
+    post:
+      tags:
+        - Auth
+      summary: Resend validation email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_name:
+                  description: User name that will receive the email
+                  type: string
+              required:
+                - user_name
+              example: { "user_name": "juanito@hotmail.com" }
+      responses:
+        200:
+          description: Email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Email sent"
+                  msg_es:
+                    type: string
+                    example: "Email enviado"
+                example:
+                  {
+                    msg: "Validation email sent",
+                    msg_es: "Correo de validacion enviado",
+                  }
+        400:
+          $ref: "#/components/responses/400"
+
+components:
+  schemas:
+    auth.login_data=user_name_and_password:
+      type: object
+      properties:
+        user_name:
+          type: string
+          required: true
+          example: ""
+        password:
+          type: string
+          required: true
+          example: ""
+        keep_logged:
+          type: boolean
+          example: true
+          description: If true, the user will be logged 365 days, otherwise jwt will took the config.json time
+      required:
+        - user_name
+        - password
+    auth.login_data=user_name:
+      type: object
+      properties:
+        user_name:
+          type: string
+          required: true
+          example: ""
+        keep_logged:
+          type: boolean
+          example: true
+          description: If true, the user will be logged 365 days, otherwise jwt will took the config.json time
+      required:
+        - user_name
+    UserRecoveryPassword:
+      type: object
+      properties:
+        user_name:
+          type: string
+          format: email
+          example: "jack_2021@mail.com"
+        expires_in:
+          type: number
+          format: milliseconds
+          default: 3600000
+      required:
+        - user_name
+    UserAuthorized:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60f70d4a2ab4442c6012c8cd"
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+        second_surname:
+          type: string
+          example: null
+    User:
+      type: object
+      properties:
+        old_id:
+          type: number
+          example: 1
+        _id:
+          type: string
+          example: "60f70d4a2ab4442c6012c8cd"
+        company_id:
+          type: string
+          example: "619839da77198a1fe03edba9"
+        branch_id:
+          type: string
+          example: "61b3ad48e4af7ff33b374f0b"
+        account_id:
+          type: string
+          example: "625459ec11a1dd9728c80b82"
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+        second_surname:
+          type: string
+          example: null
+        gender:
+          type: string
+          example: "H"
+        user_name:
+          type: string
+          description: |
+            Is `NULL` if the `api.show_user_name` setting is `true`
+          example: "jack_2021@mail.com"
+        thumbnail_image_name:
+          type: string
+          example: "thumb_image_name.ext"
+        thumbnail_image_url:
+          type: string
+          example: "url.to.thumbnail_image/thumb_image_name.ext"
+        image_name:
+          type: string
+          example: "image_name.ext"
+        image_url:
+          type: string
+          example: "url.to.image/image_name.ext"
+        validation_code:
+          type: string
+          example: "0e10bac5456f2b4bbc8b45ff0655dd5f5a88a334"
+        validated:
+          type: boolean
+          example: true
+        validation_date:
+          type: string
+          example: "2021-07-20T18:01:48.067Z"
+        authorize:
+          type: boolean
+          example: true
+        authorize_code:
+          type: string
+          example: "12345"
+        check_in_require:
+          type: boolean
+          example: true
+        last_check_in:
+          type: string
+          example: ""
+        password_change_date:
+          type: string
+          example: ""
+        root:
+          type: boolean
+          example: false
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        all_permissions:
+          type: array
+          items:
+            type: string
+            example: "Permission alias"
+        active:
+          type: boolean
+          example: true
+        last_login:
+          type: string
+          example: ""
+        session_expire:
+          type: string
+          example: ""
+        created_at:
+          type: string
+          example: "2021-07-20T17:52:11.067Z"
+        updated_at:
+          type: string
+          example: "2021-07-20T18:08:06.657Z"
+        deleted_at:
+          type: string
+          example: ""
+        created_by:
+          type: object
+          $ref: "#/components/schemas/CreatedBy"
+        updated_by:
+          type: object
+          $ref: "#/components/schemas/UpdatedBy"
+    Permission:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "12345678909876543212345A"
+        name:
+          type: string
+          example: "Permission name"
+        alias:
+          type: string
+          example: "Permission alias"
+        alias_id:
+          type: number
+          example: 1
+    Profile:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "12345678909876543212345A"
+        enabled:
+          type: boolean
+          example: true
+        name:
+          type: string
+          example: "Profile name"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+    CreatedBy:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60f71d402ab4842c6012c20z"
+        name:
+          type: string
+          example: "Andrew Brown"
+    UpdatedBy:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "65f70d4acab4472c60a2c8ps"
+        name:
+          type: string
+          example: "Marvel Williams"
+    UserToRegister:
+      type: object
+      properties:
+        old_id:
+          type: number
+          example: 1
+        company_id:
+          type: string
+          format: mongo_id
+          example: "123456789098765432123456"
+          description: |
+            It is required if the `api.company_id_required` setting is `true`
+          default: NULL
+        branch_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+          default: NULL
+        account_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+          default: NULL
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+          default: NULL
+        second_surname:
+          type: string
+          example: null
+          default: NULL
+        gender:
+          type: string
+          example: "H"
+          default: NULL
+        user_name:
+          type: string
+          example: "jack_2021@mail.com"
+          description: |
+            ***
+            If `auth.user_name_type` setting is `email`, it must have a valid email format
+            ***
+            If `auth.user_name_type` setting is `phone_number`, it must have a valid phone number format
+            ***
+            If `auth.user_name_type` setting is `code`, it must have the number of characters specified in `auth.user_name_min_length`
+        password:
+          type: string
+          example: "Abc.123"
+          description: |
+            It is required if the `auth.login_data` setting is `user_name_and_password`
+          default: NULL
+        root:
+          type: boolean
+          example: false
+          default: false
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+          default: []
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+          default: []
+        active:
+          type: boolean
+          example: true
+          default: true
+        captcha_text:
+          type: string
+          example: "527AD1"
+          description: |
+            It is required if the `captcha.enabled` setting is `true`
+        captcha_id:
+          type: string
+          example: "61d5d2bdc2ec68a9c58a0e87"
+          description: |
+            It is required if the `captcha.enabled` setting is `true`
+      required:
+        - name
+        - user_name
+    UserToCreate:
+      type: object
+      properties:
+        old_id:
+          type: number
+          example: 1
+        company_id:
+          type: string
+          format: mongo_id
+          example: "123456789098765432123456"
+          description: |
+            It is required if the `api.company_id_required` setting is `true`
+          default: NULL
+        branch_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+          default: NULL
+        account_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+          default: NULL
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+          default: NULL
+        second_surname:
+          type: string
+          example: null
+          default: NULL
+        gender:
+          type: string
+          example: "H"
+          default: NULL
+        user_name:
+          type: string
+          example: "jack_2021@mail.com"
+          description: |
+            ***
+            If `auth.user_name_type` setting is `email`, it must have a valid email format
+            ***
+            If `auth.user_name_type` setting is `phone_number`, it must have a valid phone number format
+            ***
+            If `auth.user_name_type` setting is `code`, it must have the number of characters specified in `auth.user_name_min_length`
+        password:
+          type: string
+          example: "Abc.123"
+          description: |
+            It is required if the `auth.login_data` setting is `user_name_and_password`
+          default: NULL
+        root:
+          type: boolean
+          example: false
+          default: false
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+          default: []
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+          default: []
+        active:
+          type: boolean
+          example: true
+          default: true
+      required:
+        - name
+        - user_name
+    UserToUpdate:
+      type: object
+      properties:
+        company_id:
+          type: string
+          format: mongo_id
+          example: "123456789098765432123456"
+          description: |
+            It can't be `null` if the `api.company_id_required` setting is `true`
+        branch_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+        account_id:
+          type: string
+          format: mongo_id
+          example: "12345678909876543212345A"
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+        second_surname:
+          type: string
+          example: null
+        gender:
+          type: string
+          example: "H"
+        user_name:
+          type: string
+          example: "jack_2021@mail.com"
+          description: |
+            ***
+            If `auth.user_name_type` setting is `email`, it must have a valid email format
+            ***
+            If `auth.user_name_type` setting is `phone_number`, it must have a valid phone number format
+            ***
+            If `auth.user_name_type` setting is `code`, it must have the number of characters specified in `auth.user_name_min_length`
+        password:
+          type: string
+          example: "Abc.123"
+          description: |
+            It can't be `null` if the `auth.login_data` setting is `user_name_and_password`
+        root:
+          type: boolean
+          example: false
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        active:
+          type: boolean
+          example: true
+        authorize:
+          type: boolean
+          example: true
+        authorize_code:
+          type: string
+          example: "12345"
+    UserDeleted:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60f70d4a2ab4442c6012c8cd"
+    ResetPassword:
+      type: object
+      properties:
+        password:
+          type: string
+          description: |
+            It must have the number of characters specified in `auth.password_min_length`
+      required:
+        - password
+    UserChekIn:
+      type: object
+      properties:
+        check_in_code:
+          type: string
+          example: "12345"
+    UserAuthorizeValidate:
+      type: object
+      properties:
+        authorize_code:
+          type: string
+          example: "12345"
+        permissions:
+          type: string
+          description: |
+            Alias of the permission that the user must have to be authorized
+      required:
+        - authorize_code
+        - permissions
+    UserToken:
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "Successful login"
+        msg_es:
+          type: string
+          example: "Inicio de sesion exitoso"
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.IQn33EFuqYp5KBwnfckIZwi-2Tz8Ddy6HUDbQlpTAp0"
+    UserCheckIn:
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "Check-in exitoso"
+        msg_es:
+          type: string
+          example: "Successful check-in"
+        user:
+          $ref: "#/components/schemas/User"
+    200GenCaptchaBase64:
+      title: If base64 is true
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "61a79a6975819ae52fe49399"
+        img:
+          type: string
+          example: "data/captcha/61a79a6975819ae52fe49399.jpg"
+        captcha_base64:
+          type: string
+          example: "iVBORw0KGgoAAAANSUhEUgAAAZAAAADICAYAAADGFbfiAA..."
+    200GenCaptchaNoBase64:
+      title: If base64 is false or not specified
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "61a79a6975819ae52fe49399"
+        img:
+          type: string
+          example: "data/captcha/61a79a6975819ae52fe49399.jpg"
+        captcha_base64:
+          type: string
+          example: ""
+    401:
+      title: "Unexpected error"
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "An error occurred while validating the token and permissions"
+        msg_es:
+          type: string
+          example: "Ocurrio un error mientras se validaba el token y los permisos"
+    401NoToken:
+      title: "Missing token"
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "There is no token in the request"
+        msg_es:
+          type: string
+          example: "No hay token en la petición"
+    401JWTExpired:
+      title: "Expired token"
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "Jwt expired"
+        msg_es:
+          type: string
+          example: "El token ha expirado"
+    401InactiveUser:
+      title: "Inactive user"
+      type: object
+      properties:
+        msg:
+          type: string
+          example: "Inactive user"
+        msg_es:
+          type: string
+          example: "Usuario inactivo"
+    UserRedisCreateUpdateLogin:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60f70d4a2ab4442c6012c8cd"
+        company_id:
+          type: string
+          example: "619839da77198a1fe03edba9"
+        branch_id:
+          type: string
+          example: "61b3ad48e4af7ff33b374f0b"
+        account_id:
+          type: string
+          example: "625459ec11a1dd9728c80b82"
+        name:
+          type: string
+          example: "Jack"
+        first_surname:
+          type: string
+          example: "Smith"
+        second_surname:
+          type: string
+          example: null
+        gender:
+          type: string
+          example: "H"
+        user_name:
+          type: string
+          example: "jack_2021@mail.com"
+        thumbnail_image_name:
+          type: string
+          example: "thumb_image_name.ext"
+        thumbnail_image_url:
+          type: string
+          example: "url.to.thumbnail_image/thumb_image_name.ext"
+        image_name:
+          type: string
+          example: "image_name.ext"
+        image_url:
+          type: string
+          example: "url.to.image/image_name.ext"
+        validation_code:
+          type: string
+          example: "0e10bac5456f2b4bbc8b45ff0655dd5f5a88a334"
+        validated:
+          type: boolean
+          example: true
+        validation_date:
+          type: string
+          example: "2021-07-20T18:01:48.067Z"
+        authorize:
+          type: boolean
+          example: true
+        authorize_code:
+          type: string
+          example: "12345"
+        check_in_require:
+          type: boolean
+          example: true
+        last_check_in:
+          type: string
+          example: ""
+        password_change_date:
+          type: string
+          example: ""
+        root:
+          type: boolean
+          example: false
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+        # all_permissions:
+        #   type: array
+        #   items:
+        #     type: string
+        #     example: "Permission alias"
+        active:
+          type: boolean
+          example: true
+        last_login:
+          type: string
+          example: ""
+        penultimate_login:
+          type: string
+          example: ""
+          description: |
+            Just in `userLogin`
+        session_expire:
+          type: string
+          example: ""
+        created_at:
+          type: string
+          example: "2021-07-20T17:52:11.067Z"
+        updated_at:
+          type: string
+          example: "2021-07-20T18:08:06.657Z"
+        deleted_at:
+          type: string
+          example: ""
+        created_by:
+          type: object
+          $ref: "#/components/schemas/CreatedBy"
+        updated_by:
+          type: object
+          $ref: "#/components/schemas/UpdatedBy"
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjRjYzk1ODk4ZDc2NGIzNGU2ZmVjOWIiLCJob3N0IjoiMTkyLjE2OC4wLjEyOjMwMzIiLCJhZ2VudCI6Im5vZGUtZmV0Y2gvMS4wICgraHR0cHM6Ly9naXRodWIuY29tL2JpdGlubi9ub2RlLWZldGNoKSIsImlhdCI6MTY0OTUzMTAxNSwiZXhwIjoxNjgxMDY3MDE1fQ.cj6remZTlGRxKVPbTdd69CBtNKAO7xRw1T5mnuueQGE"
+          description: |
+            Just in `userLogin`
+    UserRedisDeleted:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60f70d4a2ab4442c6012c8cd"
+  parameters:
+    base64:
+      name: base64
+      in: query
+      description: Generate and return the base64 data of the captcha image
+      schema:
+        type: string
+        default: "false"
+    searchParam:
+      name: search
+      in: query
+      schema:
+        type: number
+        default: ""
+        description: Search matches in `search_fields` fields
+    searchFieldsParam:
+      name: search_fields
+      in: query
+      schema:
+        type: array
+        default:
+          ["name", "first_surname", "second_surname", "gender", "user_name"]
+        description: Find `search` matches in these fields
+    orderParam:
+      name: order
+      in: query
+      schema:
+        type: string
+        default: asc
+        description: Order to get records (`asc` or `desc`)
+    orderFieldParam:
+      name: order_field
+      in: query
+      schema:
+        type: string
+        default: name
+        description: Field to sort with the `order` value, it can be any property of the user model
+    activeParam:
+      name: active
+      in: query
+      description: Get an active (`true` or `1`), inactive (`false` or `0`) or all (`null`) users
+      schema:
+        type: boolean
+        default: null
+    rootParam:
+      name: root
+      in: query
+      description: Get admin (`true` or `1`), non-admin (`false` or `0`) or all (`null`) users
+      schema:
+        type: boolean
+        default: null
+    exceptionsParam:
+      name: exceptions
+      in: query
+      description: Array of ids to exclude users
+      schema:
+        type: array
+        default: []
+    limitParam:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      schema:
+        type: number
+        minimum: 1
+        default: 10
+    fromParam:
+      name: from
+      in: query
+      description: Number of items to skip before returning the results
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+
+  responses:
+    200Captcha:
+      description: Captcha generated correctly
+      content:
+        application/json:
+          schema:
+            anyOf:
+              - $ref: "#/components/schemas/200GenCaptchaBase64"
+              - $ref: "#/components/schemas/200GenCaptchaNoBase64"
+    204Image:
+      description: Image deleted
+    204User:
+      description: User deleted
+    400:
+      description: An error occurred
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: ""
+              msg_es:
+                type: string
+                example: ""
+    401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            anyOf:
+              - $ref: "#/components/schemas/401"
+              - $ref: "#/components/schemas/401NoToken"
+              - $ref: "#/components/schemas/401JWTExpired"
+              - $ref: "#/components/schemas/401InactiveUser"
+    404:
+      description: A user with the specified data was not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "User not found"
+              msg_es:
+                type: string
+                example: "Usuario no encontrado"
+    403:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Permission denied"
+              msg_es:
+                type: string
+                example: "Permiso denegado"
+    403Logout:
+      description: Invalid token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Invalid token"
+              msg_es:
+                type: string
+                example: "El token ya no es válido"
+    410:
+      description: User deleted
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "User deleted"
+              msg_es:
+                type: string
+                example: "Usuario eliminado"
+
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: x-token
