@@ -35,8 +35,9 @@ export class MapComponent implements AfterViewInit {
 
   @ViewChild('mapa') divMapa!: ElementRef;
   mapa!: mapboxgl.Map
-  zoomLevel: number = 15;
-  center: [number, number] = [ -102.76457, 20.81449 ];
+  zoomLevel: number = 16;
+  // center: [number, number] = [ -102.76457, 20.81449 ];
+  center: [number, number] = [ -102.78239, 20.847367 ];
 
   // Arreglo de marcadores
   marcadores: MarcadorColor[] = [];

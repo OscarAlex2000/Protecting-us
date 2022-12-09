@@ -11,6 +11,7 @@ import { AuthService } from 'src/app/auth/services/auth.service';
 export class DashboardComponent {
 
   get usuario() {
+    localStorage.setItem('_id', this.authService.usuario._id );
     return this.authService.usuario;
   }
 

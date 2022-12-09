@@ -17,6 +17,10 @@ export class UserComponent implements OnInit {
 
     emailEdit: boolean = true; // Can you edit email?
     returnButton: boolean = true;
+    active: boolean = true;
+    root: boolean = false;
+    id: string = localStorage.getItem('_id')!;
+
     get usuario() {
         return this.dashService.usuario;
     }
@@ -57,7 +61,8 @@ export class UserComponent implements OnInit {
             name: '',
             first_lastname: '',
             second_lastname: '',
-            email: ''
+            email: '',
+            active: true
         };
         const { name, first_lastname, second_lastname, email } = this.miFormulario.value;
 
@@ -68,8 +73,8 @@ export class UserComponent implements OnInit {
         user.first_lastname = this.miFormulario.controls.first_lastname.touched ? first_lastname : this.usuario.first_lastname;
         user.second_lastname = this.miFormulario.controls.second_lastname.touched ? second_lastname : this.usuario.second_lastname;
         user.email = this.miFormulario.controls.email.touched ? this.usuario.email : this.usuario.email;
-    
-        this.dashService.updateUser( this.usuario._id, user.name, user.first_lastname, user.second_lastname )
+
+        this.dashService.updateUser( this.usuario._id, user.name, user.first_lastname, user.second_lastname, this.active, this.root )
         .subscribe( (resp)  => {
             if ( resp.ok === true ) {
                 Swal.fire({
@@ -97,6 +102,54 @@ export class UserComponent implements OnInit {
 
     returnUsers() {
         this.router.navigateByUrl('/dashboard/users');
+    }
+
+    changeActive( isChecked: any ) {
+        this.active = isChecked.target.checked;
+
+        if ( this.active ) {
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: 'Usuario',
+                text: 'Habilitado correctamente!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        } else {
+            Swal.fire({
+                position: 'center',
+                icon: 'warning',
+                title: 'Usuario',
+                text: 'Deshabilitado!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    }
+
+    changeRoot( isChecked: any ) {
+        this.root = isChecked.target.checked;
+
+        if ( this.root ) {
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: 'Usuario',
+                text: 'Ahora es ADMINISTRADOR!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        } else {
+            Swal.fire({
+                position: 'center',
+                icon: 'warning',
+                title: 'Usuario',
+                text: 'Ya no es Administrador!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
     }
 
 }

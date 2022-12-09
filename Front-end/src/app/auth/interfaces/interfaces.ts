@@ -72,7 +72,8 @@ export interface User {
     email: string;
     first_lastname: string;
     second_lastname: string;
-
+    root: boolean;
+    active: boolean;
 }
 
 // Auth user
@@ -140,6 +141,8 @@ export interface UserResponse {
     msg: string,
     msg_es: string,
     user: {
+        active: boolean;
+        root: boolean;
         _id: string,
         name: string,
         user_name: string,

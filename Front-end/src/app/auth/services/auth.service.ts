@@ -76,7 +76,9 @@ export class AuthService {
               name: resp.user.name,
               email: resp.user.user_name,
               first_lastname: resp.user.first_surname,
-              second_lastname: resp.user.second_surname
+              second_lastname: resp.user.second_surname,
+              root: resp.user.root,
+              active: resp.user.active
             }
 
             return resp.ok;

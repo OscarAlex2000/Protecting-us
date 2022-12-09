@@ -5,8 +5,20 @@
     (ngSubmit)="updateUser()">
     <div class="container-fluid">
         <div class="row">
-            <div class="col">
+            <div class="col-12">
                 <span class="login100-form-title p-b-45">Usuario</span>
+            </div>
+        </div>
+        <div class="row mb-2 ml-2">
+            <div class="col-md-11 col-sm-11 col-11 align-self-start">
+                <div class="form-check form-switch">
+                    <input type="checkbox" class="form-check-input" [checked]="usuario.root" [disabled]="!returnButton && !usuario.root" (change)="changeRoot( $event )" style="width: 50px; height: 25px;">
+                </div>
+            </div>
+            <div class="col-md-1 col-sm-1 col-1 align-self-end">
+                <div class="form-check form-switch">
+                    <input type="checkbox" class="form-check-input" [checked]="usuario.active" [disabled]="!returnButton || usuario._id == id" (change)="changeActive( $event )" style="width: 50px; height: 25px;">
+                </div>
             </div>
         </div>
         <div class="row">
@@ -82,5 +94,5 @@
     </div>
 </form>
 
-<!-- {{ usuario | json }}
-{{ user_now | json }} -->
+<!-- {{ usuario | json }} -->
+<!-- {{ user_now | json }} -->

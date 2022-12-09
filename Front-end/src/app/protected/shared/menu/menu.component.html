@@ -13,7 +13,7 @@
                             <i class="fa fa-home" aria-hidden="true"></i> Inicio
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" *ngIf="usuario.root"> 
                         <a class="nav-link" routerLink="/dashboard/users" (click)="navigate('/dashboard/users')" style="color: #000000; cursor: pointer;">
                             <i class="fa fa-users" aria-hidden="true"></i> Usuarios
                         </a>

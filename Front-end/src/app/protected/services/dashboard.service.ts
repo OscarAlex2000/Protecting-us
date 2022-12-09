@@ -72,7 +72,9 @@ export class DashService {
                         name: resp.user.name,
                         email: resp.user.user_name,
                         first_lastname: resp.user.first_surname,
-                        second_lastname: resp.user.second_surname
+                        second_lastname: resp.user.second_surname,
+                        root: resp.user.root,
+                        active: resp.user.active
                     }
 
                     return resp.ok;
@@ -81,11 +83,11 @@ export class DashService {
             );
     }
 
-    updateUser( _id: string, name: string, first_lastname: string, second_lastname: string ) {
+    updateUser( _id: string, name: string, first_lastname: string, second_lastname: string, active: boolean, root: boolean ) {
         const url  = `${ this.baseUrl_users }/users/${ _id }`;
         const headers = new HttpHeaders()
             .set('x-token', localStorage.getItem('token') || '' );
-        const body = { name, first_surname: first_lastname, second_surname: second_lastname, keep_logged: true };
+        const body = { name, first_surname: first_lastname, second_surname: second_lastname, active, root, keep_logged: true };
     
         return this.http.patch<any>( url, body, { headers } )
         .pipe(
