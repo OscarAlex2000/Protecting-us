@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.24.0",
+    "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "captcha-canvas": "^3.1.0",
     "cors": "^2.8.5",
@@ -21,19 +21,19 @@
     "express-validator": "^6.9.2",
     "image-size": "^1.0.0",
     "ioredis": "^4.27.6",
-    "jimp": "^0.16.1",
+    "jimp": "^0.3.5",
     "js-yaml": "^4.1.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "libvips": "^0.0.2",
     "mongoose": "^6.0.13",
     "randomstring": "^1.2.2",
     "redoc": "^2.0.0-rc.54",
     "redoc-express": "^1.0.0",
-    "sharp": "^0.28.3",
+    "sharp": "^0.32.6",
     "skia-canvas": "^0.9.27",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^3.0.1"
   }
 }

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const dbConnection = async() => {
-    
     return await new Promise ( async (resolve, reject) => {
         try {
+            mongoose.set('strictQuery', true);
             await mongoose.connect(`mongodb${global.mongo.srv ? '+srv' : ''}://${((global.mongo.user !== '' && global.mongo.user !== undefined) ? global.mongo.user + ':' + ((global.mongo.pass !== '' && global.mongo.pass !== undefined) ? global.mongo.pass + '@' : '@') : '')}${global.mongo.host}${((!global.mongo.srv) ? ':' + global.mongo.port : '')}/${global.mongo.db}`, {
                 autoIndex: true,
             }, (err) => {
