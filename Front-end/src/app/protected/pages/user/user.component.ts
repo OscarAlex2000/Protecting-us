@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule  } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, ReactiveFormsModule  } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from 'src/app/auth/services/auth.service';
@@ -25,13 +25,13 @@ export class UserComponent implements OnInit {
         return this.dashService.usuario;
     }
 
-    constructor( private fb: FormBuilder, 
+    constructor( private fb: UntypedFormBuilder, 
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private dashService: DashService,
         private authService: AuthService  ) {}
 
-    miFormulario: FormGroup = this.fb.group({
+    miFormulario: UntypedFormGroup = this.fb.group({
         name: [ , [ Validators.required ] ],
         first_lastname: [ , [ Validators.required ] ],
         second_lastname: [ , [ Validators.required ] ],
