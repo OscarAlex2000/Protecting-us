@@ -14,9 +14,11 @@ import { AuthService } from '../../services/auth.service';
 export class RegisterComponent {
 
   miFormulario: UntypedFormGroup = this.fb.group({
-    name:     ['', [ Validators.required ]],
-    email:    ['', [ Validators.required, Validators.email ]],
-    password: ['', [ Validators.required, Validators.minLength(6) ]],
+    name:            ['', [ Validators.required ]],
+    first_lastname:  ['', []],
+    second_lastname: ['', []],
+    email:           ['', [ Validators.required, Validators.email ]],
+    password:        ['', [ Validators.required, Validators.minLength(6) ]],
   });
 
   constructor( private fb: UntypedFormBuilder,
@@ -24,10 +26,11 @@ export class RegisterComponent {
               private authService: AuthService ) {}
 
   registro() {
-    const { name, email, password } = this.miFormulario.value;
+    const { name, first_lastname, second_lastname, email, password } = this.miFormulario.value;
 
-    this.authService.register( name, email, password )
+    this.authService.register( name, first_lastname, second_lastname, email, password )
       .subscribe( (resp)  => {
+        console.log(resp)
         if ( resp.ok === true ) {
           Swal.fire('Datos guardados correctamente!',resp.msg_es,'success')
           this.router.navigateByUrl('/login');

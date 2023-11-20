@@ -9,7 +9,7 @@ const userNameDisponible = async (user_name = '') => {
     // Verificar si el nombre de usuario esta disponible
     if (user_name !== '' && user_name !== null && user_name !== undefined) {
         const existeUserName = await Usuario.findOne(
-            { $and: [{ user_name }, { status: true }] }
+            { $and: [{ user_name: user_name.toLowerCase() }, { status: true }] }
         );
         if (existeUserName) {
             throw ({ msg: `The username ${user_name} is not available`, msg_es: `El nombre de usuario ${user_name} no esta disponible` });

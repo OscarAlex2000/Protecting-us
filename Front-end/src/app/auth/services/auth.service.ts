@@ -31,9 +31,9 @@ export class AuthService {
 
   constructor( private http: HttpClient ) {}
 
-  register( name: string, email: string, password: string ) {
+  register( name: string, first_lastname: string, second_lastname: string, email: string, password: string ) {
     const url  = `${ this.baseUrl_users }/users/register`;
-    const body = { name, user_name: email, password };
+    const body = { name, user_name: email, first_surname: first_lastname, second_surname: second_lastname, password };
 
     return this.http.post<RegisterResponse>( url, body )
       .pipe(

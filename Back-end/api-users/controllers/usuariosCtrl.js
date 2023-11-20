@@ -281,7 +281,7 @@ const userPost = async (req, res = response) => {
             first_surname,
             second_surname,
             gender,
-            user_name,
+            user_name: user_name.toLowerCase(),
             password,
             validation_code: global.auth.validation_code_type == "long_code" ? crypto.randomBytes(20).toString("hex") : randomstring.generate({ length: 6, capitalization: "uppercase", charset: "alphanumeric" }),
             root,
