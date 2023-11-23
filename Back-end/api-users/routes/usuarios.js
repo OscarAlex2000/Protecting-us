@@ -4,7 +4,7 @@ const { validarCampos, validarJWT, db_connection } = require('../middlewares');
 const { existeUsuarioPorId, existeUsuarioPorOldId, oldidDisponible, userNameDisponible, userNameExiste, existeCodigoValidacion, esUsuarioEliminado, checkUserPermissions, checkUserProfiles, AuthorizeCodeExiste, AuthorizeCodeDisponible, AuthorizeCodeDisponiblePatch, userNameDisponiblePatch, esPosibleEliminarUsuario, esPosibleDesactivarUsuario } = require('../helpers');
 const { usersGet, totalUsers, userGet, userGetByOld, userPost, userValidate, userValidateGet, userUploadImage, userDeleteImage, userPatch, userDelete, userPassRecoveryCode, userAuthorizeValidator } = require('../controllers/usuariosCtrl');
 const Usuario = require('../models/usuarioModel');
-const bcryptjs = require('bcryptjs')
+const bcryptjs = require('bcryptjs');
 
 const router = Router();
 

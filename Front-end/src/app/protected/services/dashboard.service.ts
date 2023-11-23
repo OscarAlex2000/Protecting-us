@@ -5,7 +5,8 @@ import { of, Observable } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import { User, Users, 
-    UserResponse, UsersResponse } from '../../auth/interfaces/interfaces';
+        UserResponse, UsersResponse, 
+        MarkResponse } from '../../auth/interfaces/interfaces';
 
 import { environment } from '../../../environments/environment';
 
@@ -19,7 +20,6 @@ export class DashService {
 
     private api_key: string = environment.api_key;
     private baseUrl_users: string = environment.baseUrl_users;
-    private baseUrl_companies: string = environment.baseUrl_companies;
 
     private _usuario!: User;
     private _usuarios!: Users;
@@ -39,6 +39,7 @@ export class DashService {
 
     constructor( private http: HttpClient ) {}
 
+    // Obtener todos lo usuarios
     getUsers( search: string = '' ): Observable<boolean> {
         const url = `${ this.baseUrl_users }/users`;
         const params = { search };
@@ -59,6 +60,7 @@ export class DashService {
             );
     }
 
+    // Obtener usuario por id
     getUser( id: string ): Observable<boolean> {
         const url = `${ this.baseUrl_users }/users/${ id }`;
         const headers = new HttpHeaders()
@@ -83,6 +85,7 @@ export class DashService {
             );
     }
 
+    // Actualizar usuario (id)
     updateUser( _id: string, name: string, first_lastname: string, second_lastname: string, active: boolean, root: boolean ) {
         const url  = `${ this.baseUrl_users }/users/${ _id }`;
         const headers = new HttpHeaders()
@@ -99,6 +102,7 @@ export class DashService {
         );
     }
 
+    // Eliminar usuario
     deleteUser( id: string ): Observable<boolean> {
         const url = `${ this.baseUrl_users }/users/${ id }`;
         const headers = new HttpHeaders()
@@ -113,6 +117,23 @@ export class DashService {
                 }),
                 catchError( err => of(false) )
             );
+    }
+
+    // Crear marcador
+    createMark( marcadores: any[] ) {
+        const url = `${ this.baseUrl_users }/marks`;
+        const body = { marks: marcadores };
+        const headers = new HttpHeaders()
+            .set('x-token', localStorage.getItem('token') || '' );
+
+        return this.http.post<MarkResponse>( url, body, { headers } )
+        .pipe(
+            tap( ( resp ) => {
+                console.log(resp);
+            }),
+            map( resp => resp ),
+            catchError( err => of(err.error[0]) )
+        );
     }
 
     logout() {

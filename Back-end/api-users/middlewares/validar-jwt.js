@@ -24,7 +24,7 @@ const validarJWT = async (req = request, res = response, next) => {
 
         // Buscar el usuario correspondiente al _id que esta en el JWT
         // const usuario = await Usuario.findById(_id);
-        let usuario = await Usuario.findById(_id)
+        let usuario = await Usuario.findById(_id);
         if (!usuario) {
             // conn.close();
             return res.status(404).json({
@@ -92,7 +92,6 @@ const validarJWT = async (req = request, res = response, next) => {
             msg_es: `Ocurrio un error mientras se validaba el token y los permisos`
         })
     }
-
 }
 
 module.exports = {

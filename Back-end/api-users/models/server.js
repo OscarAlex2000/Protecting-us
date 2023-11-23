@@ -36,7 +36,8 @@ class Server {
 
         this.paths = {
             auth: '/auth',
-            usuarios: '/users'
+            usuarios: '/users',
+            marcadores: '/marks'
         }
 
         // Middlewares
@@ -107,6 +108,7 @@ class Server {
     routes() {
         this.app.use(this.paths.auth, require('../routes/auth'));
         this.app.use(this.paths.usuarios, require('../routes/usuarios'));
+        this.app.use(this.paths.marcadores, require('../routes/marcadores'));
 
         // Documentation
         this.app.get('/doc.yml', (req, res) => {

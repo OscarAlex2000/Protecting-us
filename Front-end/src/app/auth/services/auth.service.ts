@@ -6,9 +6,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 
-import { CompanyResponse, Company,
-        BranchResponse, Branch,
-        RegisterResponse, User,
+import { RegisterResponse, User,
         AuthResponse } from '../interfaces/interfaces';
 
 @Injectable({
@@ -21,8 +19,6 @@ export class AuthService {
   private baseUrl_users: string = environment.baseUrl_users;
   private baseUrl_companies: string = environment.baseUrl_companies;
 
-  private _company!: Company;
-  private _branch!: Branch;
   private _usuario!: User;
 
   get usuario() {

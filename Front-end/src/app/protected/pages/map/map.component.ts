@@ -1,10 +1,14 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
+import Swal from 'sweetalert2';
+
+import { DashService } from '../../services/dashboard.service';
 
 interface MarcadorColor {
+  id: string;
   color: string;
   marker?: mapboxgl.Marker;
-  centro?: [number, number]
+  centro?: [number, number];
 }
 
 @Component({
@@ -27,6 +31,15 @@ interface MarcadorColor {
     li {
       cursor: pointer;
     }
+
+    @media screen and (max-width: 991px){
+      .list-group {
+        position: fixed;
+        top: 300px;
+        right: 20px;
+        z-index: 99;
+      }
+    }
     `
   ]
 })
@@ -34,7 +47,7 @@ interface MarcadorColor {
 export class MapComponent implements AfterViewInit {
 
   @ViewChild('mapa') divMapa!: ElementRef;
-  mapa!: mapboxgl.Map
+  mapa!: mapboxgl.Map;
   zoomLevel: number = 16;
   // center: [number, number] = [ -102.76457, 20.81449 ];
   center: [number, number] = [ -102.78239, 20.847367 ];
@@ -42,7 +55,9 @@ export class MapComponent implements AfterViewInit {
   // Arreglo de marcadores
   marcadores: MarcadorColor[] = [];
 
-  constructor() {}
+  constructor(
+    private dashService: DashService
+  ) {}
 
   ngAfterViewInit(): void {
     this.mapa = new mapboxgl.Map({
@@ -53,17 +68,11 @@ export class MapComponent implements AfterViewInit {
     });
 
     this.leerLocalStorage();
-
-    // const markerHtml: HTMLElement = document.createElement('div');
-    // markerHtml.innerHTML = 'Hola Mundo';
-
-    // new mapboxgl.Marker()
-    //   .setLngLat( this.center )
-    //   .addTo( this.mapa );
   }
 
   agregarMarcador() {
     const color = "#xxxxxx".replace(/x/g, y=>(Math.random()*16|0).toString(16));
+    // const color = "#FF0000"
 
     const nuevoMarcador = new mapboxgl.Marker({
       draggable: true,
@@ -73,37 +82,72 @@ export class MapComponent implements AfterViewInit {
       .addTo( this.mapa );
       
     this.marcadores.push({
+      id: "",
       color,
       marker: nuevoMarcador
     });
 
-    this.guardarMarcadoresLocalStorage()
+    // this.guardarMarcadores()
 
     nuevoMarcador.on('dragend', () => {
-      this.guardarMarcadoresLocalStorage();
+      this.guardarMarcadores();
     });
   }
 
-  irMarcador( marker: mapboxgl.Marker ) {
-    this.mapa.flyTo({
-      center: marker.getLngLat()
-    });
+  // Centrar marcador
+  irMarcador( marcador: any ) {
+    console.log(marcador)
+    if ( !marcador.centro ) {
+      this.mapa.flyTo({
+        center: marcador.marker.getLngLat()
+      });
+    } else {
+      this.mapa.flyTo({
+        center: [marcador.centro[0], marcador.centro[1]]
+      });
+    }
+    
   }
 
-  guardarMarcadoresLocalStorage() {
-    const lngLatArr: MarcadorColor[] = [];
+  // Guardar y/o actualizar marcadores en BD
+  guardarMarcadores() {
+    let lngLatArr: MarcadorColor[] = [];
 
     this.marcadores.forEach( m => {
+      const id = m.id
       const color = m.color;
-      const { lng, lat } = m.marker!.getLngLat();
+      let lng_aux = 0;
+      let lat_aux = 0;
+
+      if ( !m.centro ) {
+        const { lng, lat } = m.marker!.getLngLat();
+        lng_aux = lng;
+        lat_aux = lat;
+      } else {
+        lng_aux = m.centro[0];
+        lat_aux = m.centro[1];
+      }
 
       lngLatArr.push({
+        id: id,
         color: color,
-        centro: [ lng, lat ]
+        centro: [ lng_aux, lat_aux ]
       });
-    })
+    });
 
-    localStorage.setItem('marcadores', JSON.stringify(lngLatArr) );
+    // Petición a BD
+    this.dashService.createMark( lngLatArr )
+      .subscribe( (resp)  => {
+        if ( resp.ok === false ) {
+          Swal.fire('Error al guardar los datos', resp.msg_es, 'error');
+        } else {
+          this.marcadores = resp.mark;
+          // lngLatArr = resp.marks;
+        }
+      });
+
+    // Guardar en Local Storage
+    // localStorage.setItem('marcadores', JSON.stringify(lngLatArr) );
   }
 
   leerLocalStorage() {
@@ -122,20 +166,27 @@ export class MapComponent implements AfterViewInit {
         .addTo( this.mapa );
 
       this.marcadores.push({
+        id: "",
         marker: newMarker,
         color: m.color
       });
 
       newMarker.on('dragend', () => {
-        this.guardarMarcadoresLocalStorage();
+        this.guardarMarcadores();
       });
     });
   }
 
+  // Borrar marcador de mapa y de BD
   borrarMarcador( i: number ) {
+    const marcador_to_delete = this.marcadores[i];
     this.marcadores[i].marker?.remove();
-    this.marcadores.splice( i, 1);
-    this.guardarMarcadoresLocalStorage();
+    this.marcadores.splice(i, 1);
+
+    if ( marcador_to_delete.id ) {
+      console.log('inside'); 
+    }
+    // this.guardarMarcadores();
   }
 
 }

@@ -1,55 +1,3 @@
-// Company interface
-export interface CompanyResponse {
-    _id: string,
-    key: string,
-    name: string,
-    address: string,
-    phone_number: number,
-    rfc: string,
-    email: string,
-    business_name: string,
-    disabled: boolean,
-    status: boolean,
-    created_at: string
-}
-
-export interface Company {
-    _id: string;
-    name: string;
-}
-
-// Branch interface
-export interface BranchResponse {
-    total: number,
-    branches: [
-        {
-            _id: string,
-            company_id: string,
-            name: string,
-            stole: boolean
-            mac_address: [],
-            phone_number: number
-            address: string,
-            email: string
-            disabled: boolean,
-            status: boolean,
-            created_at: string,
-            settings: [],
-            archives: [],
-            company: {
-                _id: string,
-                name: string
-            }
-            id: string
-        }
-    ]
-}
-
-export interface Branch {
-    _id: string;
-    name: string;
-}
-
 // Register user interface
 export interface RegisterResponse {
     ok: boolean,
@@ -149,4 +97,13 @@ export interface UserResponse {
         first_surname: string,
         second_surname: string
     }
+}
+
+
+// Create Mark
+export interface MarkResponse {
+    ok: boolean,
+    msg: string,
+    msg_es: string,
+    mark: any[]
 }
