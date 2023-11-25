@@ -9,6 +9,10 @@ const MarkSchema = Schema({
         type: [],
         default: []
     },
+    location: {
+        type: String,
+        default: ''
+    },
     status: {
         type: Boolean,
         default: true
@@ -18,6 +22,8 @@ const MarkSchema = Schema({
             {
                 _id: Schema.Types.ObjectId,
                 name: String,
+                first_lastname: String,
+                second_lastname: String,
                 user_name: String
             }
         ],
@@ -33,6 +39,8 @@ const MarkSchema = Schema({
             {
                 _id: Schema.Types.ObjectId,
                 name: String,
+                first_lastname: String,
+                second_lastname: String,
                 user_name: String
             }
         ],

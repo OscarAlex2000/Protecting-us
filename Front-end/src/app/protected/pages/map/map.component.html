@@ -6,7 +6,7 @@
         + Agregar
     </li>
     <li class="list-group-item"
-        *ngFor="let marcador of marcadores; let i = index"
+        *ngFor="let marcador of marcadoresArr; let i = index"
         (click)="irMarcador( marcador );"
         (dblclick)="borrarMarcador( i )"
         [ngStyle]="{

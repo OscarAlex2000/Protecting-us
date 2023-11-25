@@ -99,6 +99,11 @@ export interface UserResponse {
     }
 }
 
+// Get Marks
+export interface Marks {
+    total: number,
+    marks: any[]
+}
 
 // Create Mark
 export interface MarkResponse {

@@ -1,14 +1,17 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import * as mapboxgl from 'mapbox-gl';
 import Swal from 'sweetalert2';
 
 import { DashService } from '../../services/dashboard.service';
 
 interface MarcadorColor {
+  _id?: string,
   id: string;
   color: string;
   marker?: mapboxgl.Marker;
   centro?: [number, number];
+  location?: string;
 }
 
 @Component({
@@ -53,21 +56,44 @@ export class MapComponent implements AfterViewInit {
   center: [number, number] = [ -102.78239, 20.847367 ];
 
   // Arreglo de marcadores
-  marcadores: MarcadorColor[] = [];
+  marcadoresArr: MarcadorColor[] = [];
+
+  get marcadores() { 
+    return this.dashService.marcadores;
+  }
+
+  get totalMarcadores() {
+    return this.dashService.totalMarcadores;
+  }
 
   constructor(
+    private router: Router,
     private dashService: DashService
   ) {}
 
-  ngAfterViewInit(): void {
+  ngOnInit(): void {
+    this.getMarks( false ); // Traer los marcadores activos
+  }
+
+  ngAfterViewInit(): void {  
     this.mapa = new mapboxgl.Map({
       container: this.divMapa.nativeElement,
       style: 'mapbox://styles/mapbox/streets-v11',
       center: this.center,
       zoom: this.zoomLevel
     });
+  }
 
-    this.leerLocalStorage();
+  getMarks( complete: boolean = false ) { 
+    this.dashService.getMarks( complete )
+    .subscribe( resp => {
+        if ( resp === true ) {
+          console.log(resp);
+          this.leerLocalStorage();
+        } else {
+            Swal.fire('ERROR', 'Error al obtener los marcadores', 'error');
+        }
+    });
   }
 
   agregarMarcador() {
@@ -81,14 +107,13 @@ export class MapComponent implements AfterViewInit {
       .setLngLat( this.center )
       .addTo( this.mapa );
       
-    this.marcadores.push({
+    this.marcadoresArr.push({
       id: "",
       color,
       marker: nuevoMarcador
     });
 
     // this.guardarMarcadores()
-
     nuevoMarcador.on('dragend', () => {
       this.guardarMarcadores();
     });
@@ -96,7 +121,6 @@ export class MapComponent implements AfterViewInit {
 
   // Centrar marcador
   irMarcador( marcador: any ) {
-    console.log(marcador)
     if ( !marcador.centro ) {
       this.mapa.flyTo({
         center: marcador.marker.getLngLat()
@@ -110,10 +134,14 @@ export class MapComponent implements AfterViewInit {
   }
 
   // Guardar y/o actualizar marcadores en BD
-  guardarMarcadores() {
+  guardarMarcadores( deleteId: string = '', i: number = 0 ) {
     let lngLatArr: MarcadorColor[] = [];
 
-    this.marcadores.forEach( m => {
+    if ( this.marcadoresArr.length === 0 ){
+      return;
+    }
+
+    this.marcadoresArr.forEach( m => {
       const id = m.id
       const color = m.color;
       let lng_aux = 0;
@@ -128,20 +156,27 @@ export class MapComponent implements AfterViewInit {
         lat_aux = m.centro[1];
       }
 
+      console.log(m.marker)
+
       lngLatArr.push({
         id: id,
         color: color,
-        centro: [ lng_aux, lat_aux ]
+        centro: [ lng_aux, lat_aux ],
+        //location: JSON.stringify(m.marker!)
       });
+
     });
 
+    if ( lngLatArr.length === 0 ){
+      return;
+    }
     // Petición a BD
     this.dashService.createMark( lngLatArr )
       .subscribe( (resp)  => {
         if ( resp.ok === false ) {
           Swal.fire('Error al guardar los datos', resp.msg_es, 'error');
         } else {
-          this.marcadores = resp.mark;
+          this.marcadoresArr = resp.mark;
           // lngLatArr = resp.marks;
         }
       });
@@ -151,11 +186,15 @@ export class MapComponent implements AfterViewInit {
   }
 
   leerLocalStorage() {
-    if ( !localStorage.getItem('marcadores') ) {
+    // if ( !localStorage.getItem('marcadores') ) {
+    //   return;
+    // }
+    if (this.dashService.marcadores.marks.length === 0) {
       return;
     }
 
-    const lngLatArr: MarcadorColor[] = JSON.parse( localStorage.getItem('marcadores')! );
+    // const lngLatArr: MarcadorColor[] = JSON.parse( localStorage.getItem('marcadores')! );
+    const lngLatArr: MarcadorColor[] = this.dashService.marcadores.marks;
 
     lngLatArr.forEach( m => {
       const newMarker = new mapboxgl.Marker({
@@ -165,10 +204,11 @@ export class MapComponent implements AfterViewInit {
         .setLngLat( m.centro! )
         .addTo( this.mapa );
 
-      this.marcadores.push({
-        id: "",
+      this.marcadoresArr.push({
+        id: (!m._id) ? "" : m._id,
         marker: newMarker,
-        color: m.color
+        color: m.color,
+        location: m.location
       });
 
       newMarker.on('dragend', () => {
@@ -179,14 +219,27 @@ export class MapComponent implements AfterViewInit {
 
   // Borrar marcador de mapa y de BD
   borrarMarcador( i: number ) {
-    const marcador_to_delete = this.marcadores[i];
-    this.marcadores[i].marker?.remove();
-    this.marcadores.splice(i, 1);
-
-    if ( marcador_to_delete.id ) {
-      console.log('inside'); 
+    const marcador_to_delete = this.marcadoresArr[i];
+    
+    if ( !marcador_to_delete.id ) {
+      this.marcadoresArr[i].marker?.remove();
+      this.marcadoresArr.splice(i, 1);
+      this.guardarMarcadores();
+    } else {
+      this.dashService.deleteMark( marcador_to_delete.id )
+        .subscribe( (resp)  => {
+          if ( resp === true ) {
+            const markerOld = JSON.parse(this.marcadoresArr[i].location!);
+            console.log(markerOld);
+            
+            // makerOld.remove();
+            this.marcadoresArr.splice(i, 1);
+            this.guardarMarcadores(marcador_to_delete.id, i);
+          } else {
+              Swal.fire('ERROR', 'No se pudo eliminar marcador', 'error');
+          }
+        });
     }
-    // this.guardarMarcadores();
   }
 
 }

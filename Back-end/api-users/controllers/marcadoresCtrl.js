@@ -4,6 +4,51 @@ const axios = require("axios");
 
 const Marcadores = require('../models/markModel');
 
+// Obtener todos los marcadores - Paginado
+const marksGet = async (req = request, res = response) => {
+    try {
+        let {
+            limit = 20,
+            from = 0,
+            search_fields = JSON.stringify([
+                "color"
+            ]),
+            search = "",
+            order_field = "created_at",
+            order = "asc",
+            complete = false,
+        } = req.query;
+        
+        let query = ( !complete  || complete === 'false' ) ?  { status: true } : {};
+
+        const [count, marcadores] = await Promise.all([
+            Marcadores.countDocuments(query),
+            Marcadores.find(query)
+                .collation({ locale: "en" })
+                .sort({
+                    [order_field]: order
+                })
+                .skip(Number(from))
+                .limit(Number(limit))
+        ]);
+
+        return res.status(200).json({
+            ok: true,
+            msg: `${count} marks found`,
+            msg_es: `Se encontraron ${count} marcadores`,
+            count,
+            marks: marcadores,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            ok: false,
+            msg: "An error occurred while getting marks information",
+            msg_es: "Ocurrio un error al obtener la información de los marcadores",
+        });
+    }
+}
+
 // Agregar marcador
 const markPost = async (req, res = response) => {
     try {
@@ -19,6 +64,7 @@ const markPost = async (req, res = response) => {
             let ObjMark = {
                 color: marks[i].color,
                 centro: marks[i].centro,
+                location: marks[i].location,
                 // created_by: req.usuario ? req.usuario : null,
                 updated_by: req.usuario ? req.usuario : null,
             };
@@ -32,7 +78,7 @@ const markPost = async (req, res = response) => {
             } else {
                 ObjMark.updated_by = req.usuario ? req.usuario : null;
                 ObjMark.updated_at = Date.now();
-                const markUP = await Marcadores.findByIdAndUpdate(marks[i].id, ObjMark, {
+                await Marcadores.findByIdAndUpdate(marks[i].id, ObjMark, {
                     new: true,
                 });
             }
@@ -41,6 +87,7 @@ const markPost = async (req, res = response) => {
                 id: marks[i].id !== '' ? marks[i].id : mark_id._id,   
                 color: marks[i].color,
                 centro: marks[i].centro,
+                location: marks[i].location,
                 created_by: {
                     _id: req.usuario ? req.usuario._id : null,
                     name: req.usuario ? req.usuario.name : '',
@@ -80,26 +127,38 @@ const markPost = async (req, res = response) => {
 const markDelete = async (req, res = response) => {
     try {
         // Variable que lleva todos los marcadores
-        const { marks } = req.body;
+        const { id } = req.params;
+
+        await Marcadores.findByIdAndUpdate(
+            id, {
+                status: false,
+                deleted_at: Date.now(),
+                updated_by: {
+                    _id: req.usuario ? req.usuario._id : null,
+                    name: req.usuario ? req.usuario.name : '',
+                    first_lastname: req.usuario ? req.usuario.first_surname : '',
+                    second_lastname: req.usuario ? req.usuario.second_surname : '',
+                    user_name: req.usuario ? req.usuario.user_name : ''
+                }
+            }, { new: true }
+        );
 
         return res.status(200).json({
-            ok: true,
-            msg: "Mark(s) update successfully",
-            msg_es: "Marcador(es) actualizado exitosamente"
-            // mark: marks_arr_resp
+            ok: true
         });    
     } catch (error) {
-        console.log(error)
+        console.log(error);
         return res.status(400).json({
             ok: false,
-            msg: "An error occurred while registering mark information",
-            msg_es: "Ocurrio un error al registrar la información del marcador",
-            error: error
+            msg: "Failed to delete user",
+            msg_es: "Ocurrio un error al eliminar el usuario",
         });
     }
 
 }
 
 module.exports = {
-    markPost
+    marksGet,
+    markPost,
+    markDelete
 };

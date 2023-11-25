@@ -1,6 +1,7 @@
 
 // const { dbConnection } = require('../database/config');
 const Usuario = require('../models/usuarioModel');
+const Marcador = require('../models/markModel');
 
 const userNameDisponible = async (user_name = '') => {
     // const conn = await dbConnection();
@@ -49,7 +50,6 @@ const AuthorizeCodeDisponible = async (authorize_code = '') => {
     }
     // conn.close();
 }
-
 
 const AuthorizeCodeDisponiblePatch = async (authorize_code = '', { req: Request }) => {
     // const conn = await dbConnection();
@@ -226,6 +226,14 @@ const esPosibleEliminarUsuario = async (id, { req: Request }) => {
     }
 }
 
+const existeMarcadorPorId = async (id) => {
+    // Verificar si el marcador con el id existe
+    const existeMarcador = await Marcador.findById(id);
+    if (!existeMarcador) {
+        throw ({ msg: `The mark with the id ${id} was not found`, msg_es: `No se encontró el marcador con el id ${id}` });
+    }
+}
+
 module.exports = {
     userNameDisponible,
     userNameDisponiblePatch,
@@ -241,4 +249,5 @@ module.exports = {
     oldidDisponible,
     esPosibleDesactivarUsuario,
     esPosibleEliminarUsuario,
+    existeMarcadorPorId
 }

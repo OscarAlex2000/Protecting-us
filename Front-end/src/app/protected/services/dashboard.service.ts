@@ -6,7 +6,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import { User, Users, 
         UserResponse, UsersResponse, 
-        MarkResponse } from '../../auth/interfaces/interfaces';
+        MarkResponse, Marks } from '../../auth/interfaces/interfaces';
 
 import { environment } from '../../../environments/environment';
 
@@ -25,6 +25,9 @@ export class DashService {
     private _usuarios!: Users;
     private _totalUsuarios!: number; 
 
+    private _marcadores!: Marks;
+    private _totalMarcadores!: number;
+
     get usuario() {
         return { ...this._usuario };
     }
@@ -34,7 +37,15 @@ export class DashService {
     }
 
     get totalUsuarios() {
-        return this._totalUsuarios  ;
+        return this._totalUsuarios;
+    }
+
+    get marcadores() {
+        return { ...this._marcadores };
+    }
+
+    get totalMarcadores() {
+        return this._totalMarcadores;
     }
 
     constructor( private http: HttpClient ) {}
@@ -119,7 +130,29 @@ export class DashService {
             );
     }
 
-    // Crear marcador
+    /////////////// MARCADORES ///////////////
+    // Obtener usuario por id
+    getMarks( complete: boolean = false  ): Observable<boolean> {
+        const url = `${ this.baseUrl_users }/marks`;
+        const headers = new HttpHeaders()
+            .set('x-token', localStorage.getItem('token') || '' );
+        const params = { complete };
+
+        return this.http.get<any>( url, { headers, params } )
+            .pipe(
+                map( (resp) => {
+                    this._marcadores = {
+                        total: resp.count,
+                        marks: resp.marks
+                    }
+
+                    return resp.ok;
+                }),
+                catchError( err => of(false) )
+            );
+    }
+
+    // Crear y/o actualizar marcador
     createMark( marcadores: any[] ) {
         const url = `${ this.baseUrl_users }/marks`;
         const body = { marks: marcadores };
@@ -134,6 +167,21 @@ export class DashService {
             map( resp => resp ),
             catchError( err => of(err.error[0]) )
         );
+    }
+
+    // Eliminar marcador
+    deleteMark( id: string ): Observable<boolean> {
+        const url = `${ this.baseUrl_users }/marks/${ id }`;
+        const headers = new HttpHeaders()
+            .set('x-token', localStorage.getItem('token') || '' );
+
+        return this.http.delete<any>( url, { headers } )
+            .pipe(
+                map( (resp) => {
+                    return resp.ok;
+                }),
+                catchError( err => of(false) )
+            );
     }
 
     logout() {
