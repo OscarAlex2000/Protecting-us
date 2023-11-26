@@ -4,6 +4,7 @@ import * as mapboxgl from 'mapbox-gl';
 import Swal from 'sweetalert2';
 
 import { DashService } from '../../services/dashboard.service';
+import { PlacesService } from '../../services/places.service';
 
 interface MarcadorColor {
   _id?: string,
@@ -48,12 +49,15 @@ interface MarcadorColor {
 })
 
 export class MapComponent implements AfterViewInit {
-
   @ViewChild('mapa') divMapa!: ElementRef;
+
+  prueba: boolean = true; 
+
   mapa!: mapboxgl.Map;
   zoomLevel: number = 16;
   // center: [number, number] = [ -102.76457, 20.81449 ];
   center: [number, number] = [ -102.78239, 20.847367 ];
+  userLocation: [number, number] = this.placesService.userLocation || [ -102.78239, 20.847367 ];
 
   // Arreglo de marcadores
   marcadoresArr: MarcadorColor[] = [];
@@ -66,22 +70,39 @@ export class MapComponent implements AfterViewInit {
     return this.dashService.totalMarcadores;
   }
 
+  get isUserLocationReady() {
+    return this.placesService.userLocation;
+  }
+
   constructor(
     private router: Router,
-    private dashService: DashService
+    private dashService: DashService,
+    private placesService: PlacesService
   ) {}
 
   ngOnInit(): void {
+    // if( !this.placesService.userLocation ) throw Error('No hay placesService');
     this.getMarks( false ); // Traer los marcadores activos
   }
 
-  ngAfterViewInit(): void {  
+  ngAfterViewInit(): void { 
     this.mapa = new mapboxgl.Map({
       container: this.divMapa.nativeElement,
       style: 'mapbox://styles/mapbox/streets-v11',
       center: this.center,
       zoom: this.zoomLevel
     });
+
+    const color = "#FF0000";
+    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
+    const geolocalizacion = new mapboxgl.Marker({
+      draggable: false,
+      color,
+    })
+      .setLngLat( ubicacionPrueba )
+      .addTo( this.mapa );
+
+    geolocalizacion.on('dragend', () => {});
   }
 
   getMarks( complete: boolean = false ) { 

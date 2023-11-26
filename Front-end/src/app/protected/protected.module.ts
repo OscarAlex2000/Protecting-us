@@ -8,13 +8,17 @@ import { SharedModule } from './shared/shared.module';
 import { UsersComponent } from './pages/users/users.component';
 import { UserComponent } from './pages/user/user.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { LoadingComponent } from './pages/loading/loading.component';
+import { MapViewComponent } from './pages/map-view/map-view.component';
 
 @NgModule({
   declarations: [
     DashboardComponent,
     MapComponent,
+    MapViewComponent,
     UserComponent,
-    UsersComponent
+    UsersComponent,
+    LoadingComponent
   ],
   imports: [
     CommonModule,
