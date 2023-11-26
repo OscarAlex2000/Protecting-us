@@ -10,12 +10,14 @@ import { UserComponent } from './pages/user/user.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LoadingComponent } from './pages/loading/loading.component';
 import { MapViewComponent } from './pages/map-view/map-view.component';
+import { ZonesMapComponent } from './pages/zones-map/zones-map.component';
 
 @NgModule({
   declarations: [
     DashboardComponent,
     MapComponent,
     MapViewComponent,
+    ZonesMapComponent,
     UserComponent,
     UsersComponent,
     LoadingComponent

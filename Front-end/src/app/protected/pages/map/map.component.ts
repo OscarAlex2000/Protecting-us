@@ -25,6 +25,13 @@ interface MarcadorColor {
       width: 100%; 
     }
 
+    .list-group-own {
+      position: fixed;
+      top: 100px;
+      left: 20px;
+      z-index: 99;
+    }
+
     .list-group {
       position: fixed;
       top: 100px;
@@ -37,10 +44,17 @@ interface MarcadorColor {
     }
 
     @media screen and (max-width: 991px){
+      .list-group-own {
+        position: fixed;
+        top: 700px;
+        left: 10px;
+        z-index: 99;
+      }
+
       .list-group {
         position: fixed;
-        top: 300px;
-        right: 20px;
+        top: 270px;
+        right: 10px;
         z-index: 99;
       }
     }
@@ -93,6 +107,11 @@ export class MapComponent implements AfterViewInit {
       zoom: this.zoomLevel
     });
 
+    const popup = new mapboxgl.Popup()
+    .setHTML(`
+      <h6>Aqui estoy yo</h6>
+      <spam>En algun lugardel mundo</spam>
+      `)
     const color = "#FF0000";
     const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
     const geolocalizacion = new mapboxgl.Marker({
@@ -100,6 +119,7 @@ export class MapComponent implements AfterViewInit {
       color,
     })
       .setLngLat( ubicacionPrueba )
+      .setPopup( popup )
       .addTo( this.mapa );
 
     geolocalizacion.on('dragend', () => {});
@@ -140,6 +160,14 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
+  // Ir a mi ubicacion
+  irUbicacion() {
+    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
+    this.mapa.flyTo({
+      center: ubicacionPrueba
+    });
+  }
+
   // Centrar marcador
   irMarcador( marcador: any ) {
     if ( !marcador.centro ) {
@@ -151,7 +179,6 @@ export class MapComponent implements AfterViewInit {
         center: [marcador.centro[0], marcador.centro[1]]
       });
     }
-    
   }
 
   // Guardar y/o actualizar marcadores en BD

@@ -6,6 +6,7 @@ import { MapComponent } from './pages/map/map.component';
 import { UserComponent } from './pages/user/user.component';
 import { UsersComponent } from './pages/users/users.component';
 import { MapViewComponent } from './pages/map-view/map-view.component';
+import { ZonesMapComponent } from './pages/zones-map/zones-map.component';
 
 const routes: Routes = [
   {
@@ -14,6 +15,7 @@ const routes: Routes = [
       { path: '', component: DashboardComponent },
       { path: 'users', component: UsersComponent },
       { path: 'map', component: MapViewComponent },
+      { path: 'zone', component: ZonesMapComponent },
       { path: 'user/:id', component: UserComponent },
       { path: 'own/:id', component: UserComponent },
       { path: '**', redirectTo: '' },
