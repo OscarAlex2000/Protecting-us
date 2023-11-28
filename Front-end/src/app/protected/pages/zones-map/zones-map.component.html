@@ -28,13 +28,14 @@
                 <tbody class="table-group-divider">
                     <tr *ngFor="let mark_aux of marcadores.marks">
                         <td>[{{ mark_aux.centro[0] }}, {{ mark_aux.centro[1] }}]</td>
-                        <td>{{ mark_aux.color }}</td>
+                        <!-- <td>{{ mark_aux.color }}</td> -->
+                        <th><input type="color" value="{{ mark_aux.color }}"></th>
                         <td>{{ mark_aux.created_at | date:'medium' }}</td>
                         <td>{{ mark_aux.created_by[0].name }}</td>
                         <td>{{ mark_aux.updated_at | date:'medium' }}</td>
                         <td>{{ mark_aux.updated_by[0].name }}</td>
-                        <td *ngIf="!mark_aux.status"><button type="button" class="btn btn-success" disabled>Seguro</button></td>
-                        <td *ngIf="mark_aux.status"><button type="button" class="btn btn-danger" disabled>Peligroso</button></td>
+                        <td *ngIf="!mark_aux.status"><span class="text-success">Seguro</span></td>
+                        <td *ngIf="mark_aux.status"><span class="text-danger">Peligro</span></td>
                     </tr>
                 </tbody>
             </table>

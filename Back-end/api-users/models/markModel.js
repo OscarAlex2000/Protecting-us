@@ -9,7 +9,7 @@ const MarkSchema = Schema({
         type: [],
         default: []
     },
-    location: {
+    info: {
         type: String,
         default: ''
     },

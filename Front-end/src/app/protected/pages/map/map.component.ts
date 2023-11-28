@@ -12,7 +12,7 @@ interface MarcadorColor {
   color: string;
   marker?: mapboxgl.Marker;
   centro?: [number, number];
-  location?: string;
+  info?: string;
 }
 
 @Component({
@@ -209,8 +209,7 @@ export class MapComponent implements AfterViewInit {
       lngLatArr.push({
         id: id,
         color: color,
-        centro: [ lng_aux, lat_aux ],
-        //location: JSON.stringify(m.marker!)
+        centro: [ lng_aux, lat_aux ]
       });
 
     });
@@ -255,8 +254,7 @@ export class MapComponent implements AfterViewInit {
       this.marcadoresArr.push({
         id: (!m._id) ? "" : m._id,
         marker: newMarker,
-        color: m.color,
-        location: m.location
+        color: m.color
       });
 
       newMarker.on('dragend', () => {
@@ -277,9 +275,6 @@ export class MapComponent implements AfterViewInit {
       this.dashService.deleteMark( marcador_to_delete.id )
         .subscribe( (resp)  => {
           if ( resp === true ) {
-            const markerOld = JSON.parse(this.marcadoresArr[i].location!);
-            console.log(markerOld);
-            
             // makerOld.remove();
             this.marcadoresArr.splice(i, 1);
             this.guardarMarcadores(marcador_to_delete.id, i);

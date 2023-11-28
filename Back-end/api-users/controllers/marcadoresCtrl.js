@@ -64,7 +64,7 @@ const markPost = async (req, res = response) => {
             let ObjMark = {
                 color: marks[i].color,
                 centro: marks[i].centro,
-                location: marks[i].location,
+                info: marks[i].info ,
                 // created_by: req.usuario ? req.usuario : null,
                 updated_by: req.usuario ? req.usuario : null,
             };
@@ -87,7 +87,7 @@ const markPost = async (req, res = response) => {
                 id: marks[i].id !== '' ? marks[i].id : mark_id._id,   
                 color: marks[i].color,
                 centro: marks[i].centro,
-                location: marks[i].location,
+                info: marks[i].info,
                 created_by: {
                     _id: req.usuario ? req.usuario._id : null,
                     name: req.usuario ? req.usuario.name : '',
