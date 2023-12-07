@@ -3,6 +3,21 @@
         <div class="container-fluid">
             <!-- <a class="navbar-brand" style="color: #000000;">MENÚ</a> -->
             <img class="rounded" src="../../../../assets/images/Protecting_us_black.png" alt="logo" style="width: 60px; height: 60px;">
+            <div class="sm-not btn-group dropstart">
+                <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa fa-envelope" aria-hidden="true"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle" *ngIf="notifications.length > 0">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-light">
+                    <li *ngFor="let not of notifications">
+                        <a class="dropdown-item" href="/dashboard/map"> Catastrofe <input type="color" value="{{ not.color }}"> 
+                            registrada por {{ not.created_by[0].name}}
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="fa fa-cog" aria-hidden="true"></i>
             </button>
@@ -23,7 +38,7 @@
                             <i class="fa fa-map" aria-hidden="true"></i> Mapa
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" *ngIf="usuario.root">
                         <a class="nav-link" routerLink="/dashboard/zone" (click)="navigate('/dashboard/zone')"  style="color: #000000; cursor: pointer;">
                             <i class="fa fa-map-marker" aria-hidden="true"></i> Zona Mapa
                         </a>
@@ -42,6 +57,25 @@
                             <li>
                                 <a class="dropdown-item" (click)="logout()" style="color: #000000; cursor: pointer;">
                                     <i class="fa fa-sign-out" aria-hidden="true"></i> Salir
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav nav-not">
+                    <li class="nav-item dropstart">
+                        <button class="btn btn-pimary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-envelope" aria-hidden="true"></i> Notificaciones
+                            <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle" *ngIf="notifications.length > 0">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-light" *ngIf="notifications.length > 0">
+                            <li *ngFor="let not of notifications">
+                                <a class="dropdown-item" href="/dashboard/map"> Catastrofe <input type="color" value="{{ not.color }}"> 
+                                    registrada por {{ not.created_by[0].name}}
                                 </a>
                             </li>
                         </ul>

@@ -7,18 +7,39 @@
     </li>
 
 </ul>
-<ul class="list-group">
+<ul class="btn-group dropdown">
+    <button type="button" class="btn btn-primary" (click)="agregarMarcador( usuario.root )">
+        + Agregar
+    </button>
+    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+        <span class="visually-hidden">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <a class="dropdown-item dropdown-menu-end dropdown-menu-lg-start" 
+            *ngFor="let marcador of marcadoresArr; let i = index"
+            (click)="irMarcador( marcador );"
+            (dblclick)="borrarMarcador( i, usuario.root )"
+            [ngStyle]="{
+                'background-color': marcador.color
+            }">
+            Catástrofe {{ i + 1 }} 
+            </a>
+        </li>
+    </ul>
+</ul>
+<!-- <ul class="list-group">
     <li class="list-group-item list-group-item-info"
-        (click)="agregarMarcador()">
+        (click)="agregarMarcador( usuario.root )">
         + Agregar
     </li>
     <li class="list-group-item"
         *ngFor="let marcador of marcadoresArr; let i = index"
         (click)="irMarcador( marcador );"
-        (dblclick)="borrarMarcador( i )"
+        (dblclick)="borrarMarcador( i, usuario.root )"
         [ngStyle]="{
             'background-color': marcador.color
         }">
         Catástrofe {{ i + 1 }}
     </li>
-</ul>
+</ul> -->

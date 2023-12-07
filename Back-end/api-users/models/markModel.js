@@ -9,10 +9,6 @@ const MarkSchema = Schema({
         type: [],
         default: []
     },
-    info: {
-        type: String,
-        default: ''
-    },
     status: {
         type: Boolean,
         default: true

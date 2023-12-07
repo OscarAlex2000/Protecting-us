@@ -40,7 +40,8 @@ const login = async (req = request, res = response) => {
                 });
             }
         } else if (global.auth.login_data === 'user_name_and_password') { // Cuando para iniciar sesion se necesite el nombre de usuario y la contraseña
-            user = await Usuario.findOne({ $and: [{ user_name }, { status: true }] });
+            const user_now = user_name.toLowerCase();
+            user = await Usuario.findOne({ $and: [{ user_name: user_now }, { status: true }] });
             if (!user) {
                 // conn.close();
                 return res.status(401).json({

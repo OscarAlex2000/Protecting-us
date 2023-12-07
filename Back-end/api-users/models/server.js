@@ -23,6 +23,11 @@ class Server {
         console.clear();
         this.app = express();
         this.server = require('http').createServer(this.app);
+        this.io = require('socket.io')(this.server);
+
+        this.io.on('connection', (socket) => {
+            // console.log('User connected')
+        });
 
         // Cargar la configuración
         this.cargarConfig();
@@ -63,6 +68,7 @@ class Server {
             });
             return this.conectarDB();
         }
+
         // Redis listen
         // await redisListen();
         // Listen
@@ -154,6 +160,15 @@ class Server {
             validarCampos,
         ], userGetByOld);
 
+        // Serve REDOC
+        this.app.post('/socket', (req, res = response) => {
+            this.io.emit('event', req.body);
+            return res.status(200).json({
+                ok: true,
+                msg: "OK",
+                msg_es: "OK"
+            })
+        });
     }
 
     listen() {

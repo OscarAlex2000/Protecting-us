@@ -5,6 +5,8 @@ import Swal from 'sweetalert2';
 
 import { DashService } from '../../services/dashboard.service';
 import { PlacesService } from '../../services/places.service';
+import { SocketService } from '../../services/socket.service';
+import { AuthService } from 'src/app/auth/services/auth.service';
 
 interface MarcadorColor {
   _id?: string,
@@ -12,7 +14,6 @@ interface MarcadorColor {
   color: string;
   marker?: mapboxgl.Marker;
   centro?: [number, number];
-  info?: string;
 }
 
 @Component({
@@ -38,9 +39,20 @@ interface MarcadorColor {
       right: 20px;
       z-index: 99;
     }
+
+    .btn-group {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      z-index: 99;
+    }
     
     li {
       cursor: pointer;
+    }
+
+    .dropdown-menu {
+      min-width: 8rem !important; 
     }
 
     @media screen and (max-width: 991px){
@@ -53,7 +65,14 @@ interface MarcadorColor {
 
       .list-group {
         position: fixed;
-        top: 270px;
+        top: 300px;
+        right: 10px;
+        z-index: 99;
+      }
+
+      .btn-group {
+        position: fixed;
+        top: 300px;
         right: 10px;
         z-index: 99;
       }
@@ -75,6 +94,12 @@ export class MapComponent implements AfterViewInit {
 
   // Arreglo de marcadores
   marcadoresArr: MarcadorColor[] = [];
+  infoMArks: MarcadorColor[] = [];
+
+  get usuario() {
+    localStorage.setItem('_id', this.authService.usuario._id );
+    return this.authService.usuario;
+  }
 
   get marcadores() { 
     return this.dashService.marcadores;
@@ -91,18 +116,24 @@ export class MapComponent implements AfterViewInit {
   constructor(
     private router: Router,
     private dashService: DashService,
-    private placesService: PlacesService
+    private authService: AuthService,
+    private placesService: PlacesService,
+    private socketService: SocketService
   ) {}
 
   ngOnInit(): void {
     // if( !this.placesService.userLocation ) throw Error('No hay placesService');
     this.getMarks( false ); // Traer los marcadores activos
+    // this.socketService.emit('Hola');
   }
 
   ngAfterViewInit(): void { 
+    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
+
     this.mapa = new mapboxgl.Map({
       container: this.divMapa.nativeElement,
       style: 'mapbox://styles/mapbox/streets-v11',
+      // center: ubicacionPrueba,
       center: this.center,
       zoom: this.zoomLevel
     });
@@ -113,7 +144,6 @@ export class MapComponent implements AfterViewInit {
       <spam>En algun lugardel mundo</spam>
       `)
     const color = "#FF0000";
-    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
     const geolocalizacion = new mapboxgl.Marker({
       draggable: false,
       color,
@@ -137,9 +167,22 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
-  agregarMarcador() {
+  agregarMarcador( root: boolean = false ) {
+    if ( !root ) {
+      Swal.fire('Error al agregar un marcador', 'Tu usuario no puede agregar marcadores', 'error');
+      return;
+    }
+
+    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
     const color = "#xxxxxx".replace(/x/g, y=>(Math.random()*16|0).toString(16));
     // const color = "#FF0000"
+
+    const found = this.marcadoresArr.find((element) => element.color === color);
+    if ( found || color === "#FF0000" ) {
+      // console.log("Color repetido");
+      this.agregarMarcador( root );
+      return;
+    }
 
     const nuevoMarcador = new mapboxgl.Marker({
       draggable: true,
@@ -154,8 +197,9 @@ export class MapComponent implements AfterViewInit {
       marker: nuevoMarcador
     });
 
-    // this.guardarMarcadores()
+    // this.guardarMarcadores(); 
     nuevoMarcador.on('dragend', () => {
+      this.socketService.emitEvent({ ok: true });
       this.guardarMarcadores();
     });
   }
@@ -182,7 +226,7 @@ export class MapComponent implements AfterViewInit {
   }
 
   // Guardar y/o actualizar marcadores en BD
-  guardarMarcadores( deleteId: string = '', i: number = 0 ) {
+  guardarMarcadores() {
     let lngLatArr: MarcadorColor[] = [];
 
     if ( this.marcadoresArr.length === 0 ){
@@ -204,8 +248,6 @@ export class MapComponent implements AfterViewInit {
         lat_aux = m.centro[1];
       }
 
-      console.log(m.marker)
-
       lngLatArr.push({
         id: id,
         color: color,
@@ -217,14 +259,12 @@ export class MapComponent implements AfterViewInit {
     if ( lngLatArr.length === 0 ){
       return;
     }
+
     // Petición a BD
-    this.dashService.createMark( lngLatArr )
+    this.dashService.createMark( lngLatArr, JSON.stringify(lngLatArr) )
       .subscribe( (resp)  => {
         if ( resp.ok === false ) {
           Swal.fire('Error al guardar los datos', resp.msg_es, 'error');
-        } else {
-          this.marcadoresArr = resp.mark;
-          // lngLatArr = resp.marks;
         }
       });
 
@@ -232,16 +272,24 @@ export class MapComponent implements AfterViewInit {
     // localStorage.setItem('marcadores', JSON.stringify(lngLatArr) );
   }
 
-  leerLocalStorage() {
+  leerLocalStorage( info: any[] = []  ) {
     // if ( !localStorage.getItem('marcadores') ) {
     //   return;
     // }
-    if (this.dashService.marcadores.marks.length === 0) {
-      return;
-    }
 
+    let lngLatArr: MarcadorColor[] = [];
+
+    if ( !info || info.length === 0 ) {
+      if (this.dashService.marcadores.marks.length === 0) {
+        return;
+      }
+
+      lngLatArr = this.dashService.marcadores.marks;
+    } else {
+      lngLatArr = info;
+    }
+    
     // const lngLatArr: MarcadorColor[] = JSON.parse( localStorage.getItem('marcadores')! );
-    const lngLatArr: MarcadorColor[] = this.dashService.marcadores.marks;
 
     lngLatArr.forEach( m => {
       const newMarker = new mapboxgl.Marker({
@@ -264,25 +312,38 @@ export class MapComponent implements AfterViewInit {
   }
 
   // Borrar marcador de mapa y de BD
-  borrarMarcador( i: number ) {
-    const marcador_to_delete = this.marcadoresArr[i];
-    
-    if ( !marcador_to_delete.id ) {
-      this.marcadoresArr[i].marker?.remove();
-      this.marcadoresArr.splice(i, 1);
-      this.guardarMarcadores();
-    } else {
-      this.dashService.deleteMark( marcador_to_delete.id )
-        .subscribe( (resp)  => {
-          if ( resp === true ) {
-            // makerOld.remove();
-            this.marcadoresArr.splice(i, 1);
-            this.guardarMarcadores(marcador_to_delete.id, i);
-          } else {
-              Swal.fire('ERROR', 'No se pudo eliminar marcador', 'error');
-          }
-        });
+  borrarMarcador( i: number, root: boolean ) {
+    if ( !root ) {
+      Swal.fire('Error al eliminar los datos', 'Tu usuario no puede eliminar marcadores', 'error');
+      return;
     }
-  }
 
+    Swal.fire({
+      title: '¿Estas seguro de eliminar el marcador?',
+      text: "¡No se podrá revertir el proceso!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#7D7F7D',
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+          const { lng, lat } = this.marcadoresArr[i].marker!.getLngLat();
+          const centroDelete: any[] = [lng, lat]; 
+
+          this.dashService.deleteMark( this.marcadoresArr[i].color, centroDelete )
+          .subscribe( (resp)  => {
+            if ( resp === true ) {
+              this.marcadoresArr[i].marker?.remove();
+              this.marcadoresArr.splice(i, 1);
+              this.guardarMarcadores();
+            } else {
+                Swal.fire('ERROR', 'No se pudo eliminar marcador', 'error');
+                return;
+            }
+          });
+        }
+    });
+  }
 }

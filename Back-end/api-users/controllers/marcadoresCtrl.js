@@ -15,7 +15,7 @@ const marksGet = async (req = request, res = response) => {
             ]),
             search = "",
             order_field = "created_at",
-            order = "asc",
+            order = "desc",
             complete = false,
         } = req.query;
         
@@ -64,12 +64,16 @@ const markPost = async (req, res = response) => {
             let ObjMark = {
                 color: marks[i].color,
                 centro: marks[i].centro,
-                info: marks[i].info ,
                 // created_by: req.usuario ? req.usuario : null,
                 updated_by: req.usuario ? req.usuario : null,
             };
 
-            if ( marks[i].id === "" ){
+            const findMark = await Marcadores.findOne({ 
+                color: marks[i].color
+            });
+
+
+            if ( !findMark || findMark === null ){
                 ObjMark.created_by = req.usuario ? req.usuario : null;
                 const mark = new Marcadores(ObjMark);
                 
@@ -78,16 +82,15 @@ const markPost = async (req, res = response) => {
             } else {
                 ObjMark.updated_by = req.usuario ? req.usuario : null;
                 ObjMark.updated_at = Date.now();
-                await Marcadores.findByIdAndUpdate(marks[i].id, ObjMark, {
+                await Marcadores.findByIdAndUpdate(findMark._id, ObjMark, {
                     new: true,
                 });
             }
 
             mark_response = {
-                id: marks[i].id !== '' ? marks[i].id : mark_id._id,   
+                id: !findMark || findMark === null ? mark_id.id : findMark._id,   
                 color: marks[i].color,
                 centro: marks[i].centro,
-                info: marks[i].info,
                 created_by: {
                     _id: req.usuario ? req.usuario._id : null,
                     name: req.usuario ? req.usuario.name : '',
@@ -127,10 +130,22 @@ const markPost = async (req, res = response) => {
 const markDelete = async (req, res = response) => {
     try {
         // Variable que lleva todos los marcadores
-        const { id } = req.params;
+        const { color, centro } = req.body;
+
+        const findMark  = await Marcadores.findOne({
+            color: color, 
+            centro: centro
+        });
+
+        if ( !findMark ) {
+            return res.status(200).json({
+                ok: true
+            }); 
+        }
 
         await Marcadores.findByIdAndUpdate(
-            id, {
+            findMark._id,
+            {
                 status: false,
                 deleted_at: Date.now(),
                 updated_by: {
@@ -140,7 +155,7 @@ const markDelete = async (req, res = response) => {
                     second_lastname: req.usuario ? req.usuario.second_surname : '',
                     user_name: req.usuario ? req.usuario.user_name : ''
                 }
-            }, { new: true }
+            }
         );
 
         return res.status(200).json({

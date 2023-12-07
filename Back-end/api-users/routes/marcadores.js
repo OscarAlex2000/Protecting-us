@@ -24,11 +24,9 @@ router.post('/', [
 
 
 // Ruta para eliminar un marcador
-router.delete('/:id', [
+router.post('/deleted', [
     db_connection,
-    //validarJWT,
-    check('id', { msg: `Invalid mark id`, msg_es: `El identificador del marcador no es válido` }).isMongoId(),
-    check('id').custom(existeMarcadorPorId),
+    validarJWT,
     validarCampos
 ], markDelete);
 

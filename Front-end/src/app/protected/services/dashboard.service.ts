@@ -132,11 +132,11 @@ export class DashService {
 
     /////////////// MARCADORES ///////////////
     // Obtener usuario por id
-    getMarks( complete: boolean = false  ): Observable<boolean> {
+    getMarks( complete: boolean = false, limit: number = 10, order: string = 'asc' ): Observable<boolean> {
         const url = `${ this.baseUrl_users }/marks`;
         const headers = new HttpHeaders()
             .set('x-token', localStorage.getItem('token') || '' );
-        const params = { complete };
+        const params = { complete, limit, order };
 
         return this.http.get<any>( url, { headers, params } )
             .pipe(
@@ -153,9 +153,9 @@ export class DashService {
     }
 
     // Crear y/o actualizar marcador
-    createMark( marcadores: any[] ) {
+    createMark( marcadores: any[], info: string ) {
         const url = `${ this.baseUrl_users }/marks`;
-        const body = { marks: marcadores };
+        const body = { marks: marcadores, info };
         const headers = new HttpHeaders()
             .set('x-token', localStorage.getItem('token') || '' );
 
@@ -170,12 +170,13 @@ export class DashService {
     }
 
     // Eliminar marcador
-    deleteMark( id: string ): Observable<boolean> {
-        const url = `${ this.baseUrl_users }/marks/${ id }`;
+    deleteMark( color: string, centro: any[] ): Observable<boolean> {
+        const url = `${ this.baseUrl_users }/marks/deleted`;
+        const body = { color, centro };
         const headers = new HttpHeaders()
             .set('x-token', localStorage.getItem('token') || '' );
 
-        return this.http.delete<any>( url, { headers } )
+        return this.http.post<any>( url, body, { headers } )
             .pipe(
                 map( (resp) => {
                     return resp.ok;
