@@ -26,7 +26,7 @@ export class DashService {
     private _totalUsuarios!: number; 
 
     private _marcadores!: Marks;
-    private _totalMarcadores!: number;
+    private _totalMarcadores!: Marks;
 
     get usuario() {
         return { ...this._usuario };
@@ -136,6 +136,7 @@ export class DashService {
         const url = `${ this.baseUrl_users }/marks`;
         const headers = new HttpHeaders()
             .set('x-token', localStorage.getItem('token') || '' );
+            console.log(complete)
         const params = { complete, limit, order };
 
         return this.http.get<any>( url, { headers, params } )
@@ -144,6 +145,13 @@ export class DashService {
                     this._marcadores = {
                         total: resp.count,
                         marks: resp.marks
+                    }
+
+                    if ( complete ) {
+                        this._totalMarcadores = {
+                            total: resp.count,
+                            marks: resp.marks
+                        }
                     }
 
                     return resp.ok;

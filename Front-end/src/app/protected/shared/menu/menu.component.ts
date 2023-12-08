@@ -61,7 +61,7 @@ export class MenuComponent {
         this.dashService.getMarks( complete, 5, 'desc' )
         .subscribe( resp => {
             if ( resp === true ) {
-                console.log(resp);
+                // console.log(resp);
                 this.notifications = this.dashService.marcadores.marks; 
             }
         });

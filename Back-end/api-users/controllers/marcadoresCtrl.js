@@ -98,6 +98,7 @@ const markPost = async (req, res = response) => {
                     second_lastname: req.usuario ? req.usuario.second_surname : '',
                     user_name: req.usuario ? req.usuario.user_name : '',
                 },
+                created_at: Date.now(),
                 updated_by: {
                     _id: req.usuario ? req.usuario._id : null,
                     name: req.usuario ? req.usuario.name : '',
@@ -105,6 +106,7 @@ const markPost = async (req, res = response) => {
                     second_lastname: req.usuario ? req.usuario.second_surname : '',
                     user_name: req.usuario ? req.usuario.user_name : '',
                 },
+                updated_at: Date.now()
             }
 
             marks_arr_resp.push(mark_response);

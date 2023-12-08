@@ -84,12 +84,12 @@ interface MarcadorColor {
 export class MapComponent implements AfterViewInit {
   @ViewChild('mapa') divMapa!: ElementRef;
 
-  prueba: boolean = true; 
+  prueba: boolean = false; 
 
   mapa!: mapboxgl.Map;
   zoomLevel: number = 16;
   // center: [number, number] = [ -102.76457, 20.81449 ];
-  center: [number, number] = [ -102.78239, 20.847367 ];
+  center: [number, number] = this.placesService.userLocation || [ -102.78239, 20.847367 ];
   userLocation: [number, number] = this.placesService.userLocation || [ -102.78239, 20.847367 ];
 
   // Arreglo de marcadores
@@ -148,7 +148,7 @@ export class MapComponent implements AfterViewInit {
       draggable: false,
       color,
     })
-      .setLngLat( ubicacionPrueba )
+      .setLngLat( this.center )
       .setPopup( popup )
       .addTo( this.mapa );
 
@@ -173,7 +173,6 @@ export class MapComponent implements AfterViewInit {
       return;
     }
 
-    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
     const color = "#xxxxxx".replace(/x/g, y=>(Math.random()*16|0).toString(16));
     // const color = "#FF0000"
 

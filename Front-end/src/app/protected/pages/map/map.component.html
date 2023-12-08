@@ -15,7 +15,7 @@
         <span class="visually-hidden">Toggle Dropdown</span>
     </button>
     <ul class="dropdown-menu">
-        <li>
+        <li *ngIf="marcadoresArr.length > 0">
             <a class="dropdown-item dropdown-menu-end dropdown-menu-lg-start" 
             *ngFor="let marcador of marcadoresArr; let i = index"
             (click)="irMarcador( marcador );"
@@ -25,6 +25,9 @@
             }">
             Catástrofe {{ i + 1 }} 
             </a>
+        </li>
+        <li *ngIf="marcadoresArr.length === 0">
+            No hay catastrofes registradas
         </li>
     </ul>
 </ul>

@@ -7,13 +7,13 @@
     </div>
     <div class="row mb-3">
         <div class="col text-end" *ngIf="getInfo">
-            <span *ngIf="marcadores.total > 0"> Se muestan {{ marcadores.marks.length }} de {{ marcadores.total }} </span>
+            <span *ngIf="totalMarcadores.total > 0"> Se muestan {{ totalMarcadores.marks.length }} de {{ totalMarcadores.total }} </span>
         </div>
     </div>
     <div class="row">
         <div class="col" *ngIf="getInfo">
-            <span *ngIf="marcadores.marks.length == 0">No se encontraron resultados</span>
-            <table class="table table-hover table-striped" *ngIf="marcadores.marks.length > 0">
+            <span *ngIf="totalMarcadores.marks.length == 0">No se encontraron resultados</span>
+            <table class="table table-hover table-striped" *ngIf="totalMarcadores.marks.length > 0">
                 <thead class="table-warning">
                     <tr>
                         <th scope="col-2">Ubicacion</th>
@@ -26,16 +26,16 @@
                     </tr>
                 </thead>
                 <tbody class="table-group-divider">
-                    <tr *ngFor="let mark_aux of marcadores.marks">
+                    <tr *ngFor="let mark_aux of totalMarcadores.marks">
                         <td>[{{ mark_aux.centro[0] }}, {{ mark_aux.centro[1] }}]</td>
                         <!-- <td>{{ mark_aux.color }}</td> -->
-                        <th><input type="color" value="{{ mark_aux.color }}"></th>
+                        <th><input type="color" value="{{ mark_aux.color }}" disabled></th>
                         <td>{{ mark_aux.created_at | date:'medium' }}</td>
                         <td>{{ mark_aux.created_by[0].name }}</td>
                         <td>{{ mark_aux.updated_at | date:'medium' }}</td>
                         <td>{{ mark_aux.updated_by[0].name }}</td>
                         <td *ngIf="!mark_aux.status"><span class="text-success">Seguro</span></td>
-                        <td *ngIf="mark_aux.status"><span class="text-danger">Peligro</span></td>
+                        <td *ngIf="mark_aux.status"><a href="/dashboard/map" style="text-decoration: none; font-size: medium;"><span class="text-danger">Peligro</span></a></td>
                     </tr>
                 </tbody>
             </table>

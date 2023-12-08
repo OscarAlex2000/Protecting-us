@@ -13,10 +13,6 @@ export class ZonesMapComponent {
 
   getInfo: boolean = false;
 
-  get marcadores() { 
-    return this.dashService.marcadores;
-  }
-
   get totalMarcadores() {
     return this.dashService.totalMarcadores;
   }
@@ -24,11 +20,11 @@ export class ZonesMapComponent {
   constructor( private dashService: DashService) {}
 
   ngOnInit(): void {
-    this.getMarks(true);
+    this.getMarks();
   }
 
-  getMarks( complete: boolean = false ) { 
-    this.dashService.getMarks( complete )
+  getMarks() { 
+    this.dashService.getMarks( true, 10, 'desc' )
     .subscribe( resp => {
         if ( resp === true ) {
           // console.log(resp);

@@ -30,6 +30,7 @@
                         <th scope="col">Primer Apellido</th>
                         <th scope="col">Segundo Apellido</th>
                         <th scope="col">Correo</th>
+                        <th scope="col">Estado</th>
                         <th scope="col"></th>
                         <th scope="col"></th>
                     </tr>
@@ -40,6 +41,8 @@
                         <td>{{ user_aux.first_surname }}</td>
                         <td>{{ user_aux.second_surname }}</td>
                         <td>{{ user_aux.user_name }}</td>
+                        <td *ngIf="user_aux.active"><span class="text-success">Activo</span></td>
+                        <td *ngIf="!user_aux.active"><span class="text-danger">Inactivo</span></td>
                         <td><a routerLink="/dashboard/user/{{user_aux._id}}"><i class="fa fa-user-circle" aria-hidden="true" style="font-size: 25px; color:#0b6ae6"></i></a></td>
                         <td><a (click)="deleteUser(user_aux._id)"><i class="fa fa-trash" aria-hidden="true" style="font-size: 25px; cursor: pointer; color: red;"></i></a></td>
                     </tr>

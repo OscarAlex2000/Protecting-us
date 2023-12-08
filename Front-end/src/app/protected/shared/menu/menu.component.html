@@ -10,12 +10,15 @@
                         <span class="visually-hidden">New alerts</span>
                     </span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-light">
-                    <li *ngFor="let not of notifications">
+                <ul class="dropdown-menu dropdown-menu-light" *ngIf="notifications.length > 0">
+                    <li *ngFor="let not of notifications" >
                         <a class="dropdown-item" href="/dashboard/map"> Catastrofe <input type="color" value="{{ not.color }}"> 
                             registrada por {{ not.created_by[0].name}}
                         </a>
                     </li>
+                </ul>
+                <ul class="dropdown-menu dropdown-menu-light" *ngIf="notifications.length === 0">
+                    <li>No hay alertas de Catastrofes</li>
                 </ul>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +81,9 @@
                                     registrada por {{ not.created_by[0].name}}
                                 </a>
                             </li>
+                        </ul>
+                        <ul class="dropdown-menu dropdown-menu-light" *ngIf="notifications.length === 0">
+                            <li>No hay alertas de Catastrofes</li>
                         </ul>
                     </li>
                 </ul>
