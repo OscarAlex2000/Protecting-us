@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/auth/services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import { DashService } from '../../services/dashboard.service';
+import { baseApiUrl } from 'mapbox-gl';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-menu',
@@ -38,6 +40,7 @@ import { DashService } from '../../services/dashboard.service';
 export class MenuComponent {
 
     notifications: any[] = [];
+    private baseUrl_users: string = environment.baseUrl_users;
 
     get marcadores() { 
         return this.dashService.marcadores;
@@ -55,6 +58,7 @@ export class MenuComponent {
 
     ngOnInit(): void {
         this.getMarks( false ); // Traer los marcadores activos
+        this.obtenerNotification()
     }
 
     getMarks( complete: boolean = false ) { 
@@ -65,6 +69,15 @@ export class MenuComponent {
                 this.notifications = this.dashService.marcadores.marks; 
             }
         });
+    }
+
+    obtenerNotification() {
+        const node  = new EventSource(`${ this.baseUrl_users }/socket?complete=false&limit=5&order=desc`);
+        node.addEventListener('message', message => {
+            let data = JSON.parse(message.data);
+            // console.log(data);
+            this.notifications = data.marks;
+        })
     }
 
     navigate( rute: string ) {

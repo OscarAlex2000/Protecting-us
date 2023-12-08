@@ -141,7 +141,7 @@ export class MapComponent implements AfterViewInit {
     const popup = new mapboxgl.Popup()
     .setHTML(`
       <h6>Aqui estoy yo</h6>
-      <spam>En algun lugardel mundo</spam>
+      <spam>En algun lugar del mundo</spam>
       `)
     const color = "#FF0000";
     const geolocalizacion = new mapboxgl.Marker({

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import Swal from 'sweetalert2';
 import { DashService } from '../../services/dashboard.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-zones-map',

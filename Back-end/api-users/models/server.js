@@ -13,8 +13,11 @@ const { response } = require('express');
 const yaml = require('js-yaml');
 const { dbConnection } = require('../database/config');
 const { userGetByOld } = require('../controllers/usuariosCtrl');
+
+const Marcadores = require('../models/markModel');
 const Usuario = require('../models/usuarioModel');
 const bcryptjs = require('bcryptjs');
+const { request } = require('http');
 
 class Server {
 
@@ -161,13 +164,55 @@ class Server {
         ], userGetByOld);
 
         // Serve REDOC
-        this.app.post('/socket', (req, res = response) => {
-            this.io.emit('event', req.body);
-            return res.status(200).json({
-                ok: true,
-                msg: "OK",
-                msg_es: "OK"
-            })
+        this.app.get('/socket', async(req = request, res = response) => {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            try {
+                const intervalId = setInterval(async () => {
+                    let {
+                        limit = 20,
+                        from = 0,
+                        search_fields = JSON.stringify([
+                            "color"
+                        ]),
+                        search = "",
+                        order_field = "created_at",
+                        order = "desc",
+                        complete = false,
+                    } = req.query;
+
+                    let query = ( !complete  || complete === 'false' ) ?  { status: true } : {};
+                    const [count, marcadores] = await Promise.all([
+                        Marcadores.countDocuments(query),
+                        Marcadores.find(query)
+                            .collation({ locale: "en" })
+                            .sort({
+                                [order_field]: order
+                            })
+                            .skip(Number(from))
+                            .limit(Number(limit))
+                    ]);
+                    let response = {
+                        marks: marcadores,
+                        count
+                    }
+
+                    res.write(`data: ${ JSON.stringify(response) }\n\n`)
+                }, 10000);
+
+                res.on('close', () => {
+                    console.log('Client close connection! :(');
+                    clearInterval(intervalId);
+                    res.end();
+                })
+            }catch(err){
+                console.log(err);
+                res.on('close', () => {
+                    console.log('Client close connection! :(');
+                    clearInterval(intervalId);
+                    res.end();
+                });
+            }
         });
     }
 
