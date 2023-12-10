@@ -68,45 +68,53 @@ const markPost = async (req, res = response) => {
                 updated_by: req.usuario ? req.usuario : null,
             };
 
-            const findMark = await Marcadores.findOne({ 
+            const findMarkLL = await Marcadores.findOne({ 
+                centro: marks[i].centro,
                 color: marks[i].color
             });
 
+            if ( !findMarkLL || findMarkLL === null ) {
 
-            if ( !findMark || findMark === null ){
-                ObjMark.created_by = req.usuario ? req.usuario : null;
-                const mark = new Marcadores(ObjMark);
-                
-                // Guardar en BD
-                mark_id = await mark.save();
-            } else {
-                ObjMark.updated_by = req.usuario ? req.usuario : null;
-                ObjMark.updated_at = Date.now();
-                await Marcadores.findByIdAndUpdate(findMark._id, ObjMark, {
-                    new: true,
+                const findMark = await Marcadores.findOne({ 
+                    color: marks[i].color
                 });
-            }
 
-            mark_response = {
-                id: !findMark || findMark === null ? mark_id.id : findMark._id,   
-                color: marks[i].color,
-                centro: marks[i].centro,
-                created_by: {
-                    _id: req.usuario ? req.usuario._id : null,
-                    name: req.usuario ? req.usuario.name : '',
-                    first_lastname: req.usuario ? req.usuario.first_surname : '',
-                    second_lastname: req.usuario ? req.usuario.second_surname : '',
-                    user_name: req.usuario ? req.usuario.user_name : '',
-                },
-                created_at: Date.now(),
-                updated_by: {
-                    _id: req.usuario ? req.usuario._id : null,
-                    name: req.usuario ? req.usuario.name : '',
-                    first_lastname: req.usuario ? req.usuario.first_surname : '',
-                    second_lastname: req.usuario ? req.usuario.second_surname : '',
-                    user_name: req.usuario ? req.usuario.user_name : '',
-                },
-                updated_at: Date.now()
+
+                if ( !findMark || findMark === null ){
+                    ObjMark.created_by = req.usuario ? req.usuario : null;
+                    const mark = new Marcadores(ObjMark);
+                    
+                    // Guardar en BD
+                    mark_id = await mark.save();
+                } else {
+                    ObjMark.updated_by = req.usuario ? req.usuario : null;
+                    ObjMark.updated_at = Date.now();
+                    await Marcadores.findByIdAndUpdate(findMark._id, ObjMark, {
+                        new: true,
+                    });
+                }
+
+                mark_response = {
+                    id: !findMark || findMark === null ? mark_id.id : findMark._id,   
+                    color: marks[i].color,
+                    centro: marks[i].centro,
+                    created_by: {
+                        _id: req.usuario ? req.usuario._id : null,
+                        name: req.usuario ? req.usuario.name : '',
+                        first_lastname: req.usuario ? req.usuario.first_surname : '',
+                        second_lastname: req.usuario ? req.usuario.second_surname : '',
+                        user_name: req.usuario ? req.usuario.user_name : '',
+                    },
+                    created_at: Date.now(),
+                    updated_by: {
+                        _id: req.usuario ? req.usuario._id : null,
+                        name: req.usuario ? req.usuario.name : '',
+                        first_lastname: req.usuario ? req.usuario.first_surname : '',
+                        second_lastname: req.usuario ? req.usuario.second_surname : '',
+                        user_name: req.usuario ? req.usuario.user_name : '',
+                    },
+                    updated_at: Date.now()
+                }
             }
 
             marks_arr_resp.push(mark_response);

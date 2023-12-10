@@ -84,7 +84,7 @@ interface MarcadorColor {
 export class MapComponent implements AfterViewInit {
   @ViewChild('mapa') divMapa!: ElementRef;
 
-  prueba: boolean = true; 
+  prueba: boolean = false; 
 
   mapa!: mapboxgl.Map;
   zoomLevel: number = 16;
