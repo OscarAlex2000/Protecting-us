@@ -84,13 +84,14 @@ interface MarcadorColor {
 export class MapComponent implements AfterViewInit {
   @ViewChild('mapa') divMapa!: ElementRef;
 
-  prueba: boolean = false; 
+  prueba: boolean = true; 
 
   mapa!: mapboxgl.Map;
   zoomLevel: number = 16;
   // center: [number, number] = [ -102.76457, 20.81449 ];
   center: [number, number] = this.placesService.userLocation || [ -102.78239, 20.847367 ];
   userLocation: [number, number] = this.placesService.userLocation || [ -102.78239, 20.847367 ];
+  // userLocation: [number, number] = [ -102.78239, 20.847367 ];
 
   // Arreglo de marcadores
   marcadoresArr: MarcadorColor[] = [];
@@ -127,9 +128,7 @@ export class MapComponent implements AfterViewInit {
     // this.socketService.emit('Hola');
   }
 
-  ngAfterViewInit(): void { 
-    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
-
+  ngAfterViewInit(): void {
     this.mapa = new mapboxgl.Map({
       container: this.divMapa.nativeElement,
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -205,9 +204,8 @@ export class MapComponent implements AfterViewInit {
 
   // Ir a mi ubicacion
   irUbicacion() {
-    const ubicacionPrueba: [number,number] = ( !this.prueba ) ? this.userLocation : [ -102.78239, 20.847367 ];
     this.mapa.flyTo({
-      center: ubicacionPrueba
+      center: this.center
     });
   }
 
@@ -318,13 +316,13 @@ export class MapComponent implements AfterViewInit {
     }
 
     Swal.fire({
-      title: '¿Estas seguro de eliminar el marcador?',
-      text: "¡No se podrá revertir el proceso!",
+      title: '¿La zona es segura para eliminar el marcador?',
+      text: "Verificar la zona",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
+      confirmButtonColor: '#008F39',
       cancelButtonColor: '#7D7F7D',
-      confirmButtonText: 'Eliminar',
+      confirmButtonText: 'Segura',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
