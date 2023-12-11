@@ -307,8 +307,8 @@
     z-index: -1;
     width: 300%;
     height: 100%;
-    background: rgb(241, 117, 0);
-    background: linear-gradient(90deg, rgba(241, 117, 0) 0%, rgb(255, 238, 2) 92%);
+    background: rgba(250, 116, 0, 0.823);
+    background: linear-gradient(90deg, rgba(236, 121, 14, 0.745) 0%, rgba(250, 179, 71, 0.823) 92%);
     top: 0;
     left: -100%;
   
