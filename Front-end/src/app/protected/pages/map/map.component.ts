@@ -158,7 +158,7 @@ export class MapComponent implements AfterViewInit {
     this.dashService.getMarks( complete )
     .subscribe( resp => {
         if ( resp === true ) {
-          console.log(resp);
+          //  console.log(resp);
           this.leerLocalStorage();
         } else {
             Swal.fire('ERROR', 'Error al obtener los marcadores', 'error');

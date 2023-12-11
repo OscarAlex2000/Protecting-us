@@ -74,6 +74,18 @@ export class UserComponent implements OnInit {
         user.second_lastname = this.miFormulario.controls.second_lastname.touched ? second_lastname : this.usuario.second_lastname;
         user.email = this.miFormulario.controls.email.touched ? this.usuario.email : this.usuario.email;
 
+        if ( user.name === "" || user.name == undefined ) {
+            Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Nombre vacio',
+                text: "El nombre no puede estar vacio",
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
+        }
+
         this.dashService.updateUser( this.usuario._id, user.name, user.first_lastname, user.second_lastname, this.active, this.root )
         .subscribe( (resp)  => {
             if ( resp.ok === true ) {
