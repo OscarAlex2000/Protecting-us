@@ -17,6 +17,7 @@ export class UsersComponent implements OnInit {
     @Output('ngModelChange') update = new EventEmitter();
 
     get usuario() {
+        localStorage.setItem('_id', this.authService.usuario._id );
         return this.authService.usuario;
     }
 
@@ -33,6 +34,16 @@ export class UsersComponent implements OnInit {
                 private authService: AuthService ) {}
 
     ngOnInit(): void {
+        if ( !this.authService.usuario.root ) {
+            Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Tu usuario no puede acceder a este apartado!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            this.router.navigateByUrl('/dashboard');
+        }
         this.getUsers('');
     }
 

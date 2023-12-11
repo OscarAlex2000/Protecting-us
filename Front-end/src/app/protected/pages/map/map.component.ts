@@ -197,7 +197,7 @@ export class MapComponent implements AfterViewInit {
 
     // this.guardarMarcadores(); 
     nuevoMarcador.on('dragend', () => {
-      this.socketService.emitEvent({ ok: true });
+      // this.socketService.emitEvent({ ok: true });
       this.guardarMarcadores();
     });
   }

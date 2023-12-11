@@ -20,6 +20,7 @@ export class ValidarTokenGuard  {
             .pipe(
               tap( (valid) => {
                 if ( !valid ) {
+                  localStorage.clear();
                   this.router.navigateByUrl('/auth');
                 }
               })
@@ -31,6 +32,7 @@ export class ValidarTokenGuard  {
       .pipe(
         tap( (valid) => {
           if ( !valid ) {
+            localStorage.clear();
             this.router.navigateByUrl('/auth');
           }
         })
